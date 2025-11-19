@@ -82,7 +82,6 @@ export default function App() {
         <Stack.Screen name="Thiết lập ngôn ngữ" component={LanguageSettingScreen} />
         <Stack.Screen name="Tài khoản" component={AccountScreen} />
 
-
       </Stack.Navigator>
     </NavigationContainer>
   );
