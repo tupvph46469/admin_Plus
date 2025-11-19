@@ -12,7 +12,7 @@ const menuData = [
   {
     title: "Quản lý mặt hàng",
     icon: "cube-outline",
-    children: ["Mặt hàng", "Thực đơn", "Danh mục", "Combo"],
+    children: ["Giá giờ chơi","Mặt hàng", "Thực đơn", "Danh mục", "Combo"],
   },
   {
     title: "Quản lý nhân viên",
@@ -112,6 +112,8 @@ export default function MoreScreen({ navigation }) {
                       navigation.navigate("Thông tin nhà hàng");
                     } else if (subItem === "Thiết lập ngôn ngữ") {
                       navigation.navigate("Thiết lập ngôn ngữ");
+                    } else if (subItem === "Giá giờ chơi") {
+                      navigation.navigate("List giờ chơi");
                     }
                     // sau này thêm các điều hướng khác tại đây
                   }}

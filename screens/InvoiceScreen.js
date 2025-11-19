@@ -3,9 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  TouchableOpacity, // Import TouchableOpacity
   ScrollView,
   FlatList,
+  Alert, // Thêm Alert để mô phỏng hành động
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -37,11 +38,18 @@ const invoices = [
   },
 ];
 
-export default function InvoiceScreen() {
+export default function InvoiceScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState("Tất cả");
 
   const today = new Date();
   const todayStr = today.toLocaleDateString("vi-VN");
+
+  // Hàm xử lý sự kiện khi nhấn vào hóa đơn
+  const handleInvoicePress = (invoice) => {
+    // Điều hướng sang màn Chi tiết hoá đơn, truyền toàn bộ object invoice
+    console.log(`Đã nhấn vào hóa đơn có ID: ${invoice.id}`);
+    navigation.navigate("Chi tiết hoá đơn", { invoice });
+  };
 
   return (
     <View style={styles.container}>
@@ -85,7 +93,11 @@ export default function InvoiceScreen() {
         data={invoices}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.invoiceItem}>
+          // Thay thế View bằng TouchableOpacity
+          <TouchableOpacity
+            style={styles.invoiceItem}
+            onPress={() => handleInvoicePress(item)} // Truyền cả object invoice
+          >
             <View style={styles.row}>
               <Text style={styles.time}>{item.time}</Text>
               <Text style={styles.id}>{item.id}</Text>
@@ -97,7 +109,8 @@ export default function InvoiceScreen() {
             <View style={styles.row}>
               <Text style={styles.method}>{item.method}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
+          // Kết thúc TouchableOpacity
         )}
         contentContainerStyle={{ paddingBottom: 340 }}
       />
@@ -151,6 +164,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   invoiceItem: {
+    // Style này áp dụng cho TouchableOpacity mới
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",

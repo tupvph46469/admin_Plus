@@ -8,7 +8,10 @@ import { Ionicons } from "@expo/vector-icons";
 import OverviewScreen from "./screens/OverviewScreen";
 import ReportScreen from "./screens/ReportScreen";
 import InvoiceScreen from "./screens/InvoiceScreen";
+import InvoiceDetailScreen from "./screens/InvoiceDetailScreen";
 import MoreScreen from "./screens/MoreScreen";
+import ListPlayPriceScreen from "./screens/ListPlayPriceScreen";
+import AddPlayScreen from "./screens/AddPlayScreen";
 import ItemListScreen from "./screensmini/ItemListScreen";
 import ItemDetailScreen from "./screensmini/ItemDetailScreen";
 import AddItemScreen from "./screensmini/AddItemScreen";
@@ -59,6 +62,7 @@ export default function App() {
           component={TabNavigator}
           options={{ headerShown: false }}
         />
+        <Stack.Screen name="Chi tiết hoá đơn" component={InvoiceDetailScreen} />
         {/* Các màn hình phụ */}
         <Stack.Screen name="Mặt hàng" component={ItemListScreen} />
         <Stack.Screen name="Chi tiết mặt hàng" component={ItemDetailScreen} />
@@ -73,6 +77,8 @@ export default function App() {
 <Stack.Screen name="EmployeeForm" component={EmployeeFormScreen} />
 {/* <Stack.Screen name="Tạo vai trò" component={RoleDetailScreen} /> */}
         <Stack.Screen name="Thông tin nhà hàng" component={RestaurantInfoScreen} />
+        <Stack.Screen name="List giờ chơi" component={ListPlayPriceScreen} />
+        <Stack.Screen name="Add giờ chơi" component={AddPlayScreen} />
         <Stack.Screen name="Thiết lập ngôn ngữ" component={LanguageSettingScreen} />
         <Stack.Screen name="Tài khoản" component={AccountScreen} />
 
