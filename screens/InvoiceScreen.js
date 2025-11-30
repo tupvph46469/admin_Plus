@@ -111,9 +111,9 @@ const QLHoaDonScreen = ({ navigation }) => {
     <View style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        {/* <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={26} color="#000" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <Text style={styles.headerTitle}>Quản lý hóa đơn</Text>
 
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+     justifyContent: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "#fff",
