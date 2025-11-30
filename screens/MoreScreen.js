@@ -20,9 +20,9 @@ const menuData = [
     children: ["Nhân viên", "Vai trò"],
   },
   {
-    title: "Quản lý thiết bị",
+    title: "Quản lý bàn chơi",
     icon: "hardware-chip-outline",
-    children: [],
+    children: ["Khu vực", "Bàn chơi"],
   },
  
   {
@@ -105,6 +105,10 @@ export default function MoreScreen({ navigation }) {
                       navigation.navigate("Thiết lập ngôn ngữ");
                     } else if (subItem === "Giá giờ chơi") {
                       navigation.navigate("List giờ chơi");
+                    } else if (subItem === "Khu vực") {
+                      navigation.navigate("Khu vực");
+                    } else if (subItem === "Bàn chơi") {
+                      navigation.navigate("Bàn chơi");
                     }
                     // sau này thêm các điều hướng khác tại đây
                   }}
