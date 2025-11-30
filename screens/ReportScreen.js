@@ -7,61 +7,69 @@ const reportData = [
     title: 'BÁO CÁO DOANH THU',
     icon: 'bar-chart',
     children: [
-      'Báo cáo doanh thu tổng quan',
-      'Báo cáo theo phương thức thanh toán',
-      'Báo cáo doanh thu theo phục vụ',
-      'Báo cáo doanh thu theo thu ngân',
-      'Phí dịch vụ',
-      'Hình thức phục vụ',
-      'Hoàn tiền',
-      'Hủy đơn chưa thanh toán',
-      'Hủy hoá đơn đã thanh toán',
-      
+      { label: 'Báo cáo doanh thu tổng quan' },
+      { label: 'Báo cáo theo phương thức thanh toán' },
+      { label: 'Báo cáo doanh thu theo phục vụ' },
+      { label: 'Báo cáo doanh thu theo thu ngân' },
+      { label: 'Phí dịch vụ' },
+      { label: 'Hình thức phục vụ' },
+      { label: 'Hoàn tiền' },
+      { label: 'Hủy đơn chưa thanh toán' },
+      { label: 'Hủy hoá đơn đã thanh toán' },
     ],
   },
   {
     title: 'BÁO CÁO MẶT HÀNG',
     icon: 'cube',
     children: [
-      'Danh mục mặt hàng',
-      'Mặt hàng bán chạy',
-      'Combo bán chạy',
-      'Nhóm lựa chọn',
-      'Mặt hàng đã hủy',
-      'Combo đã hủy',
+      { label: 'Danh mục mặt hàng' },
+      { label: 'Mặt hàng bán chạy', route: 'TopProducts' }, // 👈 gắn route
+      { label: 'Combo bán chạy' },
+      { label: 'Nhóm lựa chọn' },
+      { label: 'Mặt hàng đã hủy' },
+      { label: 'Combo đã hủy' },
     ],
   },
   {
     title: 'BÁO CÁO KHO HÀNG',
     icon: 'archive',
     children: [
-      'Tồn kho tổng hợp',
+      { label: 'Tồn kho tổng hợp' },
     ],
   },
   {
     title: 'BÁO CÁO TÀI CHÍNH',
     icon: 'cash',
     children: [
-      'Kết quả kinh doanh',
-      'Lợi nhuận theo mặt hàng',
-      'Lợi nhuận theo Combo',
+      { label: 'Kết quả kinh doanh' },
+      { label: 'Lợi nhuận theo mặt hàng' },
+      { label: 'Lợi nhuận theo Combo' },
     ],
   },
   {
     title: 'BÁO CÁO KHUYẾN MẠI',
     icon: 'gift',
     children: [
-      'Chương trình khuyến mãi',
-      'Báo cáo chiết khấu',
+      { label: 'Chương trình khuyến mãi' },
+      { label: 'Báo cáo chiết khấu' },
     ],
   }
 ];
 
-export default function ReportScreen() {
+export default function ReportScreen({ navigation }) { // 👈 nhận navigation
   const [expandedIndex, setExpandedIndex] = useState(null);
 
   const toggleExpand = (index) => {
     setExpandedIndex(index === expandedIndex ? null : index);
+  };
+
+  const handlePressChild = (child) => {
+    if (child.route) {
+      navigation.navigate(child.route);
+    } else {
+      // nếu sau này muốn làm gì khác cho các item chưa có route thì xử lý ở đây
+      console.log('Chưa gắn route cho:', child.label);
+    }
   };
 
   return (
@@ -81,9 +89,13 @@ export default function ReportScreen() {
 
           {expandedIndex === index && (
             <View style={styles.subList}>
-              {section.children.map((item, subIndex) => (
-                <TouchableOpacity key={subIndex} style={styles.subItem}>
-                  <Text style={styles.subText}>{item}</Text>
+              {section.children.map((child, subIndex) => (
+                <TouchableOpacity
+                  key={subIndex}
+                  style={styles.subItem}
+                  onPress={() => handlePressChild(child)}
+                >
+                  <Text style={styles.subText}>{child.label}</Text>
                   <Ionicons name="chevron-forward" size={16} color="#ccc" />
                 </TouchableOpacity>
               ))}
