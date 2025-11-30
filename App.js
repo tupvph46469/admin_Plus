@@ -25,6 +25,7 @@ import RestaurantInfoScreen from "./screensmini/RestaurantInfoScreen";
 import LanguageSettingScreen from "./screensmini/LanguageSettingScreen";
 import AccountScreen from './screensmini/AccountScreen';
 import LoginScreen from './screens/LoginScreen';
+import TopProductsScreen from './screensmini/TopProductsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -83,6 +84,11 @@ export default function App() {
         />
 
         {/* ------- Các màn hình phụ ------- */}
+        <Stack.Screen
+          name="TopProducts"
+          component={TopProductsScreen}
+          options={{ title: "Mặt hàng bán chạy" }}
+        />
         <Stack.Screen name="Mặt hàng" component={ItemListScreen} />
         <Stack.Screen name="Chi tiết mặt hàng" component={ItemDetailScreen} />
         <Stack.Screen name="Thêm mặt hàng" component={AddItemScreen} />
