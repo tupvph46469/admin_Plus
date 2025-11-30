@@ -12,6 +12,9 @@ import InvoiceDetailScreen from "./screens/InvoiceDetailScreen";
 import MoreScreen from "./screens/MoreScreen";
 import ListPlayPriceScreen from "./screens/ListPlayPriceScreen";
 import AddPlayScreen from "./screens/AddPlayScreen";
+import ListAreasScreen from "./screens/ListAreasScreen";
+import DetailArea from "./screens/DetailArea";
+import AddArea from "./screens/AddArea";
 import ItemListScreen from "./screensmini/ItemListScreen";
 import ItemDetailScreen from "./screensmini/ItemDetailScreen";
 import AddItemScreen from "./screensmini/AddItemScreen";
@@ -25,6 +28,7 @@ import RestaurantInfoScreen from "./screensmini/RestaurantInfoScreen";
 import LanguageSettingScreen from "./screensmini/LanguageSettingScreen";
 import AccountScreen from './screensmini/AccountScreen';
 import LoginScreen from './screens/LoginScreen';
+import TopProductsScreen from './screensmini/TopProductsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -83,6 +87,11 @@ export default function App() {
         />
 
         {/* ------- Các màn hình phụ ------- */}
+        <Stack.Screen
+          name="TopProducts"
+          component={TopProductsScreen}
+          options={{ title: "Mặt hàng bán chạy" }}
+        />
         <Stack.Screen name="Mặt hàng" component={ItemListScreen} />
         <Stack.Screen name="Chi tiết mặt hàng" component={ItemDetailScreen} />
         <Stack.Screen name="Thêm mặt hàng" component={AddItemScreen} />
@@ -97,6 +106,11 @@ export default function App() {
 
         <Stack.Screen name="Danh sách vai trò" component={RoleListScreen} />
         <Stack.Screen name="EmployeeForm" component={EmployeeFormScreen} />
+
+        {/* Khu vực screens */}
+        <Stack.Screen name="Khu vực" component={ListAreasScreen} />
+        <Stack.Screen name="Chi tiết khu vực" component={DetailArea} />
+        <Stack.Screen name="Thêm khu vực" component={AddArea} />
 
         <Stack.Screen name="Thông tin nhà hàng" component={RestaurantInfoScreen} />
         <Stack.Screen name="List giờ chơi" component={ListPlayPriceScreen} />
