@@ -29,6 +29,8 @@ import LanguageSettingScreen from "./screensmini/LanguageSettingScreen";
 import AccountScreen from './screensmini/AccountScreen';
 import LoginScreen from './screens/LoginScreen';
 import TopProductsScreen from './screensmini/TopProductsScreen';
+import ReportByTableScreen from './screens/ReportByTableScreen';
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -118,7 +120,9 @@ export default function App() {
 
         <Stack.Screen name="Thiết lập ngôn ngữ" component={LanguageSettingScreen} />
         <Stack.Screen name="Tài khoản" component={AccountScreen} />
-
+        <Stack.Screen
+        name="ReportByTable"component={ReportByTableScreen}
+        options={{ title: 'Doanh thu theo bàn' }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
