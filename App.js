@@ -27,8 +27,8 @@ import AccountScreen from './screensmini/AccountScreen';
 import LoginScreen from './screens/LoginScreen';
 import TopProductsScreen from './screensmini/TopProductsScreen';
 import ReportByTableScreen from './screens/ReportByTableScreen';
-
-
+import TableManagementScreen from './screens/TableManageScreen';
+import TableDetailScreen from './screens/TableDetailScreen';
 import { navigationRef } from './services/navigationService';
 
 const Tab = createBottomTabNavigator();
@@ -117,6 +117,8 @@ export default function App() {
         <Stack.Screen
         name="ReportByTable"component={ReportByTableScreen}
         options={{ title: 'Doanh thu theo bàn' }}/>
+       <Stack.Screen name="Bàn chơi" component={TableManagementScreen} />
+       <Stack.Screen name="TableDetailScreen" component={TableDetailScreen} options={{ title: 'Chi tiết bàn' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

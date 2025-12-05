@@ -25,22 +25,7 @@ const reportData = [
       { label: 'Combo đã hủy' },
     ],
   },
-  {
-    title: 'BÁO CÁO KHO HÀNG',
-    icon: 'archive',
-    children: [
-      { label: 'Tồn kho tổng hợp' },
-    ],
-  },
-  {
-    title: 'BÁO CÁO TÀI CHÍNH',
-    icon: 'cash',
-    children: [
-      { label: 'Kết quả kinh doanh' },
-      { label: 'Lợi nhuận theo mặt hàng' },
-      { label: 'Lợi nhuận theo Combo' },
-    ],
-  },
+
   {
     title: 'BÁO CÁO KHUYẾN MẠI',
     icon: 'gift',
