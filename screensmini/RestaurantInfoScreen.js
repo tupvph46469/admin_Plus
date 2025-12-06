@@ -26,17 +26,17 @@ export default function RestaurantInfoScreen() {
       return;
     }
 
-    Alert.alert('Đã lưu', `Thông tin nhà hàng "${name}" đã được cập nhật.`);
+    Alert.alert('Đã lưu', `Thông tin  "${name}" đã được cập nhật.`);
   };
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Thông tin nhà hàng</Text>
+      <Text style={styles.title}>Thông tin câu lac bộ</Text>
 
       <Text style={styles.label}>Mã nhà hàng</Text>
       <Text style={styles.readOnly}>{restaurantId}</Text>
 
-      <Text style={styles.label}>Tên nhà hàng (*)</Text>
+      <Text style={styles.label}>Tên câu lạc bộ (*)</Text>
       <TextInput style={styles.input} value={name} onChangeText={setName} />
 
       <Text style={styles.label}>Số điện thoại nhà hàng (tùy chọn)</Text>

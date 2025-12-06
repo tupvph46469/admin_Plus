@@ -18,7 +18,7 @@ const sampleData = [
     price: "50000",
   },
 
-  // Bạn có thể thêm nhiều dòng mẫu ở đây
+  // thêm  dòng mẫu ở đây
 ];
 
 export default function ListPlayPriceScreen({ navigation }) {
