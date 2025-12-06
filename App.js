@@ -28,17 +28,21 @@ import LoginScreen from './screens/LoginScreen';
 import TopProductsScreen from './screensmini/TopProductsScreen';
 import ReportByTableScreen from './screens/ReportByTableScreen';
 
-
 import { navigationRef } from './services/navigationService';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-/* ------------------------ BOTTOM TAB ------------------------ */
+
+/* ---------------------------------------------------------- */
+/* ---------------------- TAB NAVIGATOR ---------------------- */
+/* ---------------------------------------------------------- */
 function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        headerShown: true,              // ⭐ Bật header của từng tab
+        headerTitleAlign: "center",     // ⭐ Căn giữa tiêu đề
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === "Tổng quan") iconName = "home";
@@ -60,7 +64,11 @@ function TabNavigator() {
   );
 }
 
-/* ------------------------ MAIN APP ------------------------ */
+
+
+/* ---------------------------------------------------------- */
+/* ------------------------ MAIN APP ------------------------- */
+/* ---------------------------------------------------------- */
 export default function App() {
   return (
     <NavigationContainer ref={navigationRef}>
@@ -77,46 +85,48 @@ export default function App() {
         <Stack.Screen
           name="MainTab"
           component={TabNavigator}
-          options={{ headerShown: false }}
+          options={{ headerShown: false }}   // ❗ Quan trọng: tắt header stack
         />
 
-        {/* 🔥 SỬA ĐÚNG MÀN HÓA ĐƠN CHI TIẾT */}
+        {/* HOÁ ĐƠN CHI TIẾT */}
         <Stack.Screen
           name="InvoiceDetail"
           component={InvoiceDetailScreen}
-          options={{ title: "Chi tiết hoá đơn" }}
+          options={{ title: "Chi tiết hoá đơn", headerTitleAlign: "center" }}
         />
 
-        {/* ------- Các màn hình phụ ------- */}
+        {/* Các màn phụ */}
         <Stack.Screen
           name="TopProducts"
           component={TopProductsScreen}
-          options={{ title: "Mặt hàng bán chạy" }}
+          options={{ title: "Mặt hàng bán chạy", headerTitleAlign: "center" }}
         />
-        <Stack.Screen name="Mặt hàng" component={ItemListScreen} />
-        <Stack.Screen name="Chi tiết mặt hàng" component={ItemDetailScreen} />
-        <Stack.Screen name="Thêm mặt hàng" component={AddItemScreen} />
 
+        <Stack.Screen name="Mặt hàng" component={ItemListScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Chi tiết mặt hàng" component={ItemDetailScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Thêm mặt hàng" component={AddItemScreen} options={{ headerTitleAlign: "center" }} />
 
-        <Stack.Screen name="Nhân viên" component={EmployeeListScreen} />
-        <Stack.Screen name="Chi tiết nhân viên" component={EmployeeDetailScreen} />
-        <Stack.Screen name="Form nhân viên" component={EmployeeFormScreen} />
+        <Stack.Screen name="Nhân viên" component={EmployeeListScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Chi tiết nhân viên" component={EmployeeDetailScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Form nhân viên" component={EmployeeFormScreen} options={{ headerTitleAlign: "center" }} />
 
+        <Stack.Screen name="Khu vực" component={ListAreasScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Chi tiết khu vực" component={DetailArea} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Thêm khu vực" component={AddArea} options={{ headerTitleAlign: "center" }} />
 
-        {/* Khu vực screens */}
-        <Stack.Screen name="Khu vực" component={ListAreasScreen} />
-        <Stack.Screen name="Chi tiết khu vực" component={DetailArea} />
-        <Stack.Screen name="Thêm khu vực" component={AddArea} />
+        <Stack.Screen name="Thông tin nhà hàng" component={RestaurantInfoScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="List giờ chơi" component={ListPlayPriceScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Add giờ chơi" component={AddPlayScreen} options={{ headerTitleAlign: "center" }} />
 
-        <Stack.Screen name="Thông tin nhà hàng" component={RestaurantInfoScreen} />
-        <Stack.Screen name="List giờ chơi" component={ListPlayPriceScreen} />
-        <Stack.Screen name="Add giờ chơi" component={AddPlayScreen} />
+        <Stack.Screen name="Thiết lập ngôn ngữ" component={LanguageSettingScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Tài khoản" component={AccountScreen} options={{ headerTitleAlign: "center" }} />
 
-        <Stack.Screen name="Thiết lập ngôn ngữ" component={LanguageSettingScreen} />
-        <Stack.Screen name="Tài khoản" component={AccountScreen} />
         <Stack.Screen
-        name="ReportByTable"component={ReportByTableScreen}
-        options={{ title: 'Doanh thu theo bàn' }}/>
+          name="ReportByTable"
+          component={ReportByTableScreen}
+          options={{ title: "Doanh thu theo bàn", headerTitleAlign: "center" }}
+        />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -14,32 +14,35 @@ const menuData = [
   {
     title: "Quản lý mặt hàng",
     icon: "cube-outline",
-    children: ["Giá giờ chơi","Mặt hàng", "Danh mục", "Combo"],
+    color: "#FF6B35",
+    children: ["Giá giờ chơi", "Mặt hàng", "Danh mục", "Combo"],
   },
   {
     title: "Quản lý nhân viên",
     icon: "people-outline",
+    color: "#007AFF",
     children: ["Nhân viên"],
   },
   {
     title: "Quản lý bàn chơi",
-    icon: "hardware-chip-outline",
+    icon: "grid-outline",
+    color: "#9C27B0",
     children: ["Khu vực", "Bàn chơi"],
   },
-
   {
     title: "Thiết lập câu lạc bộ bi-a",
     icon: "settings-outline",
+    color: "#666",
     children: [
       "Thông tin câu lạc bộ",
       "Tài khoản người dùng",
       "Thiết lập ngôn ngữ",
     ],
   },
-
   {
     title: "Đăng xuất",
-    icon: "swap-horizontal-outline",
+    icon: "log-out-outline",
+    color: "#ff3b30",
     children: [],
   },
 ];
@@ -53,15 +56,15 @@ export default function MoreScreen({ navigation }) {
 
   const confirmLogout = () => {
     Alert.alert(
-      'Xác nhận',
-      'Bạn có chắc muốn đăng xuất?',
+      "Xác nhận",
+      "Bạn có chắc muốn đăng xuất?",
       [
-        { text: 'Huỷ', style: 'cancel' },
+        { text: "Huỷ", style: "cancel" },
         {
-          text: 'Đăng xuất',
-          style: 'destructive',
-          onPress: handleLogout
-        }
+          text: "Đăng xuất",
+          style: "destructive",
+          onPress: handleLogout,
+        },
       ]
     );
   };
@@ -70,150 +73,222 @@ export default function MoreScreen({ navigation }) {
     try {
       await authService.logout();
     } catch (e) {
-      // ignore - still reset navigation
-      console.warn('Logout error (ignored):', e);
+      console.warn("Logout error (ignored):", e);
     } finally {
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Login' }],
+        routes: [{ name: "Login" }],
       });
     }
   };
 
+  const handleSubItemPress = (subItem) => {
+    const routeMap = {
+      "Mặt hàng": "Mặt hàng",
+      "Vai trò": "Vai trò",
+      "Nhân viên": "Nhân viên",
+      "Thông tin nhà hàng": "Thông tin nhà hàng",
+      "Thiết lập ngôn ngữ": "Thiết lập ngôn ngữ",
+      "Giá giờ chơi": "List giờ chơi",
+      "Khu vực": "Khu vực",
+      "Bàn chơi": "Bàn chơi",
+      "Tài khoản người dùng": "Tài khoản",
+      "Thông tin câu lạc bộ": "Thông tin nhà hàng",
+    };
+
+    const route = routeMap[subItem];
+    if (route) {
+      navigation.navigate(route);
+    }
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <TouchableOpacity style={styles.profile} onPress={() => navigation.navigate("Tài khoản")}>
-        <Ionicons name="person-circle-outline" size={50} color="#007AFF" />
-        <View style={{ marginLeft: 10 }}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Profile Card */}
+      <TouchableOpacity
+        style={styles.profileCard}
+        onPress={() => navigation.navigate("Tài khoản")}
+        activeOpacity={0.7}
+      >
+        <View style={styles.avatarCircle}>
+          <Ionicons name="person" size={32} color="#007AFF" />
+        </View>
+        <View style={styles.profileInfo}>
           <Text style={styles.name}>Kiều Khánh Duy</Text>
           <Text style={styles.role}>Chủ Câu lạc bộ</Text>
         </View>
+        <Ionicons name="chevron-forward" size={20} color="#ccc" />
       </TouchableOpacity>
 
+      {/* Menu Items */}
       {menuData.map((item, index) => (
-        <View key={index}>
+        <View key={index} style={styles.card}>
+          {/* Header */}
           <TouchableOpacity
             style={styles.item}
             onPress={() => {
-              // nếu item là "Đăng xuất" thì confirm logout
-              if (item.title === 'Đăng xuất') {
+              if (item.title === "Đăng xuất") {
                 confirmLogout();
                 return;
               }
               toggleExpand(index);
             }}
+            activeOpacity={0.7}
           >
             <View style={styles.itemLeft}>
-              <Ionicons
-                name={item.icon}
-                size={22}
-                color="#007AFF"
-                style={styles.icon}
-              />
+              <View style={[styles.iconCircle, { backgroundColor: item.color + "20" }]}>
+                <Ionicons name={item.icon} size={22} color={item.color} />
+              </View>
               <Text style={styles.itemText}>{item.title}</Text>
             </View>
             {item.children.length > 0 && (
               <Ionicons
                 name={expandedIndex === index ? "chevron-up" : "chevron-down"}
-                size={18}
-                color="#007AFF"
+                size={22}
+                color="#666"
               />
             )}
             {item.children.length === 0 && (
-              <Ionicons name="chevron-forward" size={18} color="#ccc" />
+              <Ionicons name="chevron-forward" size={22} color="#666" />
             )}
           </TouchableOpacity>
 
+          {/* Sub List */}
           {expandedIndex === index && item.children.length > 0 && (
             <View style={styles.subList}>
               {item.children.map((subItem, subIndex) => (
                 <TouchableOpacity
                   key={subIndex}
                   style={styles.subItem}
-                  onPress={() => {
-                    if (subItem === "Mặt hàng") {
-                      navigation.navigate("Mặt hàng");
-                    } else if (subItem === "Vai trò") {
-                      navigation.navigate("Vai trò");
-                    } else if (subItem === "Nhân viên") {
-                      navigation.navigate("Nhân viên");
-                    } else if (subItem === "Thông tin nhà hàng") {
-                      navigation.navigate("Thông tin nhà hàng");
-                    } else if (subItem === "Thiết lập ngôn ngữ") {
-                      navigation.navigate("Thiết lập ngôn ngữ");
-                    } else if (subItem === "Giá giờ chơi") {
-                      navigation.navigate("List giờ chơi");
-                    } else if (subItem === "Khu vực") {
-                      navigation.navigate("Khu vực");
-                    } else if (subItem === "Bàn chơi") {
-                      navigation.navigate("Bàn chơi");
-                    }
-                    // sau này thêm các điều hướng khác tại đây
-                  }}
+                  onPress={() => handleSubItemPress(subItem)}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.subText}>{subItem}</Text>
-                  <Ionicons name="chevron-forward" size={16} color="#ccc" />
+                  <Ionicons name="chevron-forward" size={18} color="#999" />
                 </TouchableOpacity>
               ))}
             </View>
           )}
         </View>
       ))}
+
+      {/* Bottom spacing */}
+      <View style={{ height: 80 }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: "#fff",
+    flex: 1,
+    backgroundColor: "#f5f5f5",
   },
-  profile: {
+  contentContainer: {
+    padding: 16,
+  },
+
+  // PROFILE CARD
+  profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 30,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  avatarCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#E3F2FD",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileInfo: {
+    flex: 1,
+    marginLeft: 16,
   },
   name: {
     fontSize: 18,
     fontWeight: "600",
     color: "#333",
+    marginBottom: 4,
   },
   role: {
     fontSize: 14,
-    color: "#777",
+    color: "#666",
   },
+
+  // CARD
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    overflow: "hidden",
+  },
+
+  // ITEM
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    padding: 16,
   },
   itemLeft: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
-  icon: {
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   itemText: {
     fontSize: 16,
+    fontWeight: "500",
     color: "#333",
+    flex: 1,
   },
+
+  // SUB LIST
   subList: {
-    paddingLeft: 40,
-    paddingVertical: 5,
+    backgroundColor: "#fff",
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   subItem: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginHorizontal: 12,
+    marginVertical: 4,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
   },
   subText: {
     fontSize: 15,
-    color: "#555",
+    color: "#333",
+    fontWeight: "500",
+    flex: 1,
   },
 });

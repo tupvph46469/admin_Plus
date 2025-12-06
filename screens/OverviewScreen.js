@@ -181,7 +181,7 @@ export default function OverviewScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <Text style={styles.title}>Tổng quan doanh thu</Text>
+      <Text style={styles.title}></Text>
 
       {/* Bộ lọc thời gian */}
       <View style={styles.filterRow}>
@@ -531,8 +531,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 16,
     paddingHorizontal: 20,
     color: '#333',
   },

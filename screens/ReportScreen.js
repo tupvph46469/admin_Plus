@@ -6,20 +6,20 @@ const reportData = [
   {
     title: 'BÁO CÁO DOANH THU',
     icon: 'bar-chart',
+    color: '#007AFF',
     children: [
-      { label: 'Báo cáo doanh thu tổng quan' },
+      { label: 'Báo cáo doanh thu tổng quan', route: 'Tổng quan' },
       { label: 'Báo cáo doanh thu theo phương thức thanh toán' },
       { label: 'Báo cáo doanh thu theo bàn chơi', route: 'ReportByTable' },
-      { label: 'Hủy đơn chưa thanh toán' },
-      { label: 'Hủy hoá đơn đã thanh toán' },
     ],
   },
   {
     title: 'BÁO CÁO MẶT HÀNG',
     icon: 'cube',
+    color: '#FF6B35',
     children: [
       { label: 'Danh mục mặt hàng' },
-      { label: 'Mặt hàng bán chạy', route: 'TopProducts' }, // 👈 gắn route
+      { label: 'Mặt hàng bán chạy', route: 'TopProducts' },
       { label: 'Combo bán chạy' },
       { label: 'Mặt hàng đã hủy' },
       { label: 'Combo đã hủy' },
@@ -28,6 +28,7 @@ const reportData = [
   {
     title: 'BÁO CÁO KHO HÀNG',
     icon: 'archive',
+    color: '#9C27B0',
     children: [
       { label: 'Tồn kho tổng hợp' },
     ],
@@ -35,6 +36,7 @@ const reportData = [
   {
     title: 'BÁO CÁO TÀI CHÍNH',
     icon: 'cash',
+    color: '#28a745',
     children: [
       { label: 'Kết quả kinh doanh' },
       { label: 'Lợi nhuận theo mặt hàng' },
@@ -44,13 +46,14 @@ const reportData = [
   {
     title: 'BÁO CÁO KHUYẾN MẠI',
     icon: 'gift',
+    color: '#FF1744',
     children: [
       { label: 'Chương trình khuyến mãi' },
     ],
   }
 ];
 
-export default function ReportScreen({ navigation }) { // 👈 nhận navigation
+export default function ReportScreen({ navigation }) {
   const [expandedIndex, setExpandedIndex] = useState(null);
 
   const toggleExpand = (index) => {
@@ -61,26 +64,34 @@ export default function ReportScreen({ navigation }) { // 👈 nhận navigation
     if (child.route) {
       navigation.navigate(child.route);
     } else {
-      // nếu sau này muốn làm gì khác cho các item chưa có route thì xử lý ở đây
       console.log('Chưa gắn route cho:', child.label);
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {reportData.map((section, index) => (
-        <View key={index}>
-          <TouchableOpacity style={styles.header} onPress={() => toggleExpand(index)}>
-            <Ionicons name={section.icon} size={22} color="#007AFF" style={styles.icon} />
-            <Text style={styles.headerText}>{section.title}</Text>
+        <View key={index} style={styles.card}>
+          {/* Header */}
+          <TouchableOpacity 
+            style={styles.header} 
+            onPress={() => toggleExpand(index)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.headerLeft}>
+              <View style={[styles.iconCircle, { backgroundColor: section.color + '20' }]}>
+                <Ionicons name={section.icon} size={22} color={section.color} />
+              </View>
+              <Text style={styles.headerText}>{section.title}</Text>
+            </View>
             <Ionicons
               name={expandedIndex === index ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color="#007AFF"
-              style={{ marginLeft: 'auto' }}
+              size={22}
+              color="#666"
             />
           </TouchableOpacity>
 
+          {/* Sub List */}
           {expandedIndex === index && (
             <View style={styles.subList}>
               {section.children.map((child, subIndex) => (
@@ -88,52 +99,100 @@ export default function ReportScreen({ navigation }) { // 👈 nhận navigation
                   key={subIndex}
                   style={styles.subItem}
                   onPress={() => handlePressChild(child)}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.subText}>{child.label}</Text>
-                  <Ionicons name="chevron-forward" size={16} color="#ccc" />
+                  <Ionicons name="chevron-forward" size={18} color="#999" />
                 </TouchableOpacity>
               ))}
             </View>
           )}
         </View>
       ))}
+      
+      {/* Bottom spacing */}
+      <View style={{ height: 20 }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: '#fff',
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
+  contentContainer: {
+    padding: 16,
+  },
+  
+  // CARD
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  
+  // HEADER
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    justifyContent: 'space-between',
+    padding: 16,
   },
-  icon: {
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
   headerText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    flex: 1,
   },
+  
+  // SUB LIST
   subList: {
-    paddingLeft: 40,
-    paddingVertical: 5,
+    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   subItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,   // ✔ padding vừa đủ
+    marginHorizontal: 12,
+    marginVertical: 4,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  
+
+  subItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   subText: {
     fontSize: 15,
-    color: '#555',
+    color: '#333',
+    fontWeight: '500',
+    flex: 1,
   },
 });

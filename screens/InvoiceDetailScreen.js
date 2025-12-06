@@ -72,7 +72,7 @@ const InvoiceDetailScreen = ({ route, navigation }) => {
     return (
       <View style={styles.loadingBox}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text>Đang tải chi tiết hóa đơn...</Text>
+        <Text style={styles.loadingText}>Đang tải chi tiết hóa đơn...</Text>
       </View>
     );
   }
@@ -80,7 +80,8 @@ const InvoiceDetailScreen = ({ route, navigation }) => {
   if (!bill) {
     return (
       <View style={styles.emptyBox}>
-        <Text>Không tìm thấy hóa đơn!</Text>
+        <Ionicons name="receipt-outline" size={64} color="#ccc" />
+        <Text style={styles.emptyText}>Không tìm thấy hóa đơn!</Text>
       </View>
     );
   }
@@ -98,118 +99,223 @@ const InvoiceDetailScreen = ({ route, navigation }) => {
   const playItem = bill.items?.find((i) => i.type === "play");
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chi tiết hóa đơn</Text>
-        <View style={{ width: 26 }} />
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      
+      {/* THÔNG TIN CƠ BẢN - CARD ĐẶC BIỆT */}
+      <View style={styles.primaryCard}>
+        <View style={styles.codeRow}>
+          <View style={styles.codeLeft}>
+            <Ionicons name="receipt" size={24} color="#007AFF" />
+            <View style={styles.codeInfo}>
+              <Text style={styles.codeLabel}>Mã hóa đơn</Text>
+              <Text style={styles.codeValue}>{bill.code}</Text>
+            </View>
+          </View>
+          <View style={[styles.statusBadge, bill.paid ? styles.statusPaid : styles.statusUnpaid]}>
+            <Ionicons 
+              name={bill.paid ? "checkmark-circle" : "time"} 
+              size={16} 
+              color="#fff" 
+            />
+            <Text style={styles.statusText}>
+              {bill.paid ? "Đã thanh toán" : "Chưa thanh toán"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.infoGrid}>
+          <View style={styles.infoItem}>
+            <Ionicons name="restaurant" size={20} color="#666" />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Bàn</Text>
+              <Text style={styles.infoValue}>{tableName}</Text>
+            </View>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Ionicons name="time" size={20} color="#666" />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Giờ chơi</Text>
+              <Text style={styles.infoValue}>{getPlayTime(bill)}</Text>
+            </View>
+          </View>
+        </View>
       </View>
 
-      {/* THÔNG TIN CƠ BẢN */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Mã hóa đơn</Text>
-        <Text style={styles.value}>{bill.code}</Text>
+      {/* SẢN PHẨM / DỊCH VỤ */}
+      {products.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="cube" size={20} color="#007AFF" />
+            <Text style={styles.sectionTitle}>Sản phẩm / Dịch vụ</Text>
+          </View>
 
-        <Text style={styles.title}>Bàn</Text>
-        <Text style={styles.value}>{tableName}</Text>
+          <View style={styles.productList}>
+            {products.map((p, index) => (
+              <View key={index} style={styles.productRow}>
+                <View style={styles.productLeft}>
+                  <View style={styles.qtyBadge}>
+                    <Text style={styles.qtyText}>{p.qty || p.quantity || 1}</Text>
+                  </View>
+                  <Text style={styles.productName}>{getItemName(p)}</Text>
+                </View>
+                <Text style={styles.productPrice}>
+                  {(p.amount || 0).toLocaleString()}đ
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
-        <Text style={styles.title}>Giờ chơi</Text>
-        <Text style={styles.value}>{getPlayTime(bill)}</Text>
-      </View>
+      {/* CHI TIẾT THANH TOÁN */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="calculator" size={20} color="#007AFF" />
+          <Text style={styles.sectionTitle}>Chi tiết thanh toán</Text>
+        </View>
 
-      {/* SẢN PHẨM */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>Sản phẩm / dịch vụ</Text>
+        <View style={styles.paymentList}>
+          <View style={styles.paymentRow}>
+            <Text style={styles.paymentLabel}>Tiền giờ chơi</Text>
+            <Text style={styles.paymentValue}>
+              {(playItem?.amount || bill.playAmount || 0).toLocaleString()}đ
+            </Text>
+          </View>
 
-        {products.length > 0 ? (
-          products.map((p, index) => (
-            <View key={index} style={styles.productRow}>
-              <Text style={styles.productName}>
-                {getItemName(p)} x{p.qty || p.quantity || 1}
-              </Text>
-              <Text style={styles.productPrice}>
-                {(p.amount || 0).toLocaleString()} đ
+          <View style={styles.paymentRow}>
+            <Text style={styles.paymentLabel}>Tiền dịch vụ</Text>
+            <Text style={styles.paymentValue}>
+              {(bill.serviceAmount || 0).toLocaleString()}đ
+            </Text>
+          </View>
+
+          <View style={styles.paymentRow}>
+            <Text style={styles.paymentLabel}>Tạm tính</Text>
+            <Text style={styles.paymentValue}>
+              {(bill.subTotal || 0).toLocaleString()}đ
+            </Text>
+          </View>
+
+          {bill.surcharge > 0 && (
+            <View style={styles.paymentRow}>
+              <View style={styles.paymentLabelWithIcon}>
+                <Ionicons name="add-circle-outline" size={16} color="#FFA500" />
+                <Text style={[styles.paymentLabel, { color: '#FFA500' }]}>Phụ thu</Text>
+              </View>
+              <Text style={[styles.paymentValue, { color: '#FFA500' }]}>
+                +{(bill.surcharge || 0).toLocaleString()}đ
               </Text>
             </View>
-          ))
-        ) : (
-          <Text style={styles.value}>Không có sản phẩm</Text>
-        )}
+          )}
+
+          {totalDiscount > 0 && (
+            <View style={styles.paymentRow}>
+              <View style={styles.paymentLabelWithIcon}>
+                <Ionicons name="pricetag" size={16} color="#28a745" />
+                <Text style={[styles.paymentLabel, { color: '#28a745' }]}>Giảm giá</Text>
+              </View>
+              <Text style={[styles.paymentValue, { color: '#28a745' }]}>
+                -{totalDiscount.toLocaleString()}đ
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.divider} />
+
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Tổng tiền</Text>
+            <Text style={styles.totalValue}>
+              {(bill.total || 0).toLocaleString()}đ
+            </Text>
+          </View>
+        </View>
       </View>
 
-      {/* TIỀN GIỜ CHƠI */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Tiền giờ chơi</Text>
-        <Text style={styles.value}>
-          {(playItem?.amount || bill.playAmount || 0).toLocaleString()} đ
-        </Text>
+      {/* PHƯƠNG THỨC THANH TOÁN */}
+      {bill.paid && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="card" size={20} color="#007AFF" />
+            <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+          </View>
 
-        <Text style={styles.title}>Tiền dịch vụ</Text>
-        <Text style={styles.value}>
-          {(bill.serviceAmount || 0).toLocaleString()} đ
-        </Text>
-
-        <Text style={styles.title}>Tạm tính</Text>
-        <Text style={styles.value}>
-          {(bill.subTotal || 0).toLocaleString()} đ
-        </Text>
-
-        <Text style={styles.title}>Phụ thu</Text>
-        <Text style={styles.value}>
-          {(bill.surcharge || 0).toLocaleString()} đ
-        </Text>
-
-        <Text style={styles.title}>Giảm giá</Text>
-        <Text style={styles.value}>{totalDiscount.toLocaleString()} đ</Text>
-
-        <Text style={styles.totalLabel}>Tổng tiền</Text>
-        <Text style={styles.totalValue}>
-          {(bill.total || 0).toLocaleString()} đ
-        </Text>
-      </View>
-
-      {/* THANH TOÁN */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Trạng thái thanh toán</Text>
-        {bill.paid ? (
-          <Text style={[styles.value, { color: "#28a745" }]}>
-            Đã thanh toán
-            {bill.paidAt ? ` • ${new Date(bill.paidAt).toLocaleString()}` : ""}
-          </Text>
-        ) : (
-          <Text style={[styles.value, { color: "#d9534f" }]}>
-            Chưa thanh toán
-          </Text>
-        )}
-
-        <Text style={styles.title}>Phương thức thanh toán</Text>
-        <Text style={styles.value}>
-          {bill.paymentMethod?.toUpperCase() || "KHÔNG RÕ"}
-        </Text>
-      </View>
+          <View style={styles.paymentMethodCard}>
+            <View style={styles.paymentMethodRow}>
+              <Ionicons 
+                name={bill.paymentMethod === 'cash' ? 'cash' : 'card'} 
+                size={24} 
+                color="#007AFF" 
+              />
+              <Text style={styles.paymentMethodText}>
+                {bill.paymentMethod?.toUpperCase() || "KHÔNG RÕ"}
+              </Text>
+            </View>
+            {bill.paidAt && (
+              <Text style={styles.paymentTime}>
+                {new Date(bill.paidAt).toLocaleString('vi-VN')}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* THÔNG TIN KHÁC */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Nhân viên xử lý</Text>
-        <Text style={styles.value}>{getStaffName(bill.staff)}</Text>
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="information-circle" size={20} color="#007AFF" />
+          <Text style={styles.sectionTitle}>Thông tin khác</Text>
+        </View>
 
-        <Text style={styles.title}>Ghi chú</Text>
-        <Text style={styles.value}>{bill. note || "—"}</Text>
+        <View style={styles.infoList}>
+          <View style={styles.infoRow}>
+            <Ionicons name="person" size={18} color="#666" />
+            <View style={styles.infoTextBlock}>
+              <Text style={styles.infoRowLabel}>Nhân viên xử lý</Text>
+              <Text style={styles.infoRowValue}>{getStaffName(bill.staff)}</Text>
+            </View>
+          </View>
 
-        <Text style={styles.title}>Ngày tạo</Text>
-        <Text style={styles.value}>
-          {bill.createdAt
-            ? new Date(bill.createdAt).toLocaleString()
-            : "Không rõ"}
-        </Text>
+          {bill.note && (
+            <View style={styles.infoRow}>
+              <Ionicons name="chatbox" size={18} color="#666" />
+              <View style={styles.infoTextBlock}>
+                <Text style={styles.infoRowLabel}>Ghi chú</Text>
+                <Text style={styles.infoRowValue}>{bill.note}</Text>
+              </View>
+            </View>
+          )}
 
-        <Text style={styles.title}>Ngày cập nhật</Text>
-        <Text style={styles.value}>
-          {bill.updatedAt
-            ? new Date(bill.updatedAt).toLocaleString()
-            : "Không rõ"}
-        </Text>
+          <View style={styles.infoRow}>
+            <Ionicons name="calendar" size={18} color="#666" />
+            <View style={styles.infoTextBlock}>
+              <Text style={styles.infoRowLabel}>Ngày tạo</Text>
+              <Text style={styles.infoRowValue}>
+                {bill.createdAt
+                  ? new Date(bill.createdAt).toLocaleString('vi-VN')
+                  : "Không rõ"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="time" size={18} color="#666" />
+            <View style={styles.infoTextBlock}>
+              <Text style={styles.infoRowLabel}>Cập nhật cuối</Text>
+              <Text style={styles.infoRowValue}>
+                {bill.updatedAt
+                  ? new Date(bill.updatedAt).toLocaleString('vi-VN')
+                  : "Không rõ"}
+              </Text>
+            </View>
+          </View>
+        </View>
       </View>
+
+      {/* Khoảng trống cuối */}
+      <View style={{ height: 20 }} />
     </ScrollView>
   );
 };
@@ -217,33 +323,267 @@ const InvoiceDetailScreen = ({ route, navigation }) => {
 export default InvoiceDetailScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F5F5F5" },
-  header: {
+  container: { 
+    flex: 1, 
+    backgroundColor: "#f5f5f5" 
+  },
+  contentContainer: {
+    padding: 16,
+  },
+  loadingBox: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center",
+    backgroundColor: "#fff"
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#666"
+  },
+  emptyBox: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center",
+    backgroundColor: "#fff"
+  },
+  emptyText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#999"
+  },
+
+  // PRIMARY CARD
+  primaryCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  codeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  codeLeft: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
+    flex: 1,
   },
-  headerTitle: { fontSize: 18, fontWeight: "600" },
-  box: {
+  codeInfo: {
+    marginLeft: 12,
+  },
+  codeLabel: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 2,
+  },
+  codeValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 4,
+  },
+  statusPaid: {
+    backgroundColor: "#28a745",
+  },
+  statusUnpaid: {
+    backgroundColor: "#ff3b30",
+  },
+  statusText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#f0f0f0",
+    marginVertical: 16,
+  },
+  infoGrid: {
+    gap: 12,
+  },
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  infoContent: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+  },
+
+  // SECTION
+  section: {
     backgroundColor: "#fff",
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 10,
-    marginBottom: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
     elevation: 2,
   },
-  boxTitle: { fontSize: 16, fontWeight: "600", marginBottom: 10 },
-  title: { fontSize: 14, fontWeight: "600", marginTop: 8 },
-  value: { fontSize: 14, marginTop: 2 },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginLeft: 8,
+  },
+
+  // PRODUCT LIST
+  productList: {
+    gap: 12,
+  },
   productRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 6,
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f5f5f5",
   },
-  productName: { fontSize: 14 },
-  productPrice: { fontSize: 14, fontWeight: "600" },
-  totalLabel: { marginTop: 10, fontSize: 16, fontWeight: "700", color: "#d9534f" },
-  totalValue: { fontSize: 18, fontWeight: "700", color: "#d9534f", marginTop: 4 },
-  loadingBox: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyBox: { flex: 1, justifyContent: "center", alignItems: "center" },
+  productLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  qtyBadge: {
+    backgroundColor: "#E3F2FD",
+    borderRadius: 6,
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  qtyText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#007AFF",
+  },
+  productName: {
+    fontSize: 15,
+    color: "#333",
+    flex: 1,
+  },
+  productPrice: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+  },
+
+  // PAYMENT LIST
+  paymentList: {
+    gap: 12,
+  },
+  paymentRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  paymentLabel: {
+    fontSize: 15,
+    color: "#666",
+  },
+  paymentLabelWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  paymentValue: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 8,
+  },
+  totalLabel: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#333",
+  },
+  totalValue: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#007AFF",
+  },
+
+  // PAYMENT METHOD
+  paymentMethodCard: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 10,
+    padding: 16,
+  },
+  paymentMethodRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  paymentMethodText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  paymentTime: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 8,
+    marginLeft: 36,
+  },
+
+  // INFO LIST
+  infoList: {
+    gap: 16,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  infoTextBlock: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  infoRowLabel: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 2,
+  },
+  infoRowValue: {
+    fontSize: 15,
+    color: "#333",
+  },
 });
