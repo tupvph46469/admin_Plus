@@ -127,7 +127,7 @@ const InvoiceDetailScreen = ({ route, navigation }) => {
 
         <View style={styles.infoGrid}>
           <View style={styles.infoItem}>
-            <Ionicons name="restaurant" size={20} color="#666" />
+            <Ionicons name="square-outline" size={20} color="#666" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Bàn</Text>
               <Text style={styles.infoValue}>{tableName}</Text>

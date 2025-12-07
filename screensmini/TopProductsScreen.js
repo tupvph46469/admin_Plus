@@ -161,7 +161,6 @@ export default function TopProductsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Top Sản Phẩm Bán Chạy</Text>
 
       {/* 🔹 Box tóm tắt */}
       <View style={styles.summaryBox}>

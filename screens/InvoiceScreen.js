@@ -87,7 +87,7 @@ const QLHoaDonScreen = ({ navigation }) => {
               <Text style={styles.codeText}>{item.code || id}</Text>
             </View>
             <View style={styles.tableContainer}>
-              <Ionicons name="restaurant" size={14} color="#666" />
+              <Ionicons name="square-outline" size={14} color="#666" />
               <Text style={styles.tableText}>{tableName}</Text>
             </View>
           </View>

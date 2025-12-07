@@ -11,13 +11,13 @@ import {
 
 export default function RestaurantInfoScreen() {
   const [restaurantId] = useState('89118');
-  const [name, setName] = useState('Vanbilat');
-  const [phone, setPhone] = useState('0123456789');
+  const [name, setName] = useState('Billiard Plus Club');
+  const [phone, setPhone] = useState('0388612918');
   const [currency, setCurrency] = useState('Việt Nam đồng (VND)');
   const [businessType, setBusinessType] = useState('');
   const [city, setCity] = useState('Thành phố Hà Nội');
-  const [district, setDistrict] = useState('');
-  const [ward, setWard] = useState('');
+  const [district, setDistrict] = useState('Nam Từ Liêm');
+  const [ward, setWard] = useState('Phường Mễ Trì');
   const [address, setAddress] = useState('');
 
   const handleSave = () => {
@@ -33,13 +33,13 @@ export default function RestaurantInfoScreen() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Thông tin câu lac bộ</Text>
 
-      <Text style={styles.label}>Mã nhà hàng</Text>
+      <Text style={styles.label}>Mã câu lạc bộ</Text>
       <Text style={styles.readOnly}>{restaurantId}</Text>
 
       <Text style={styles.label}>Tên câu lạc bộ (*)</Text>
       <TextInput style={styles.input} value={name} onChangeText={setName} />
 
-      <Text style={styles.label}>Số điện thoại nhà hàng (tùy chọn)</Text>
+      <Text style={styles.label}>Số điện thoại câu lạc bộ (tùy chọn)</Text>
       <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
 
       <Text style={styles.note}>Nhập 1 hoặc nhiều số điện thoại, tối đa 100 ký tự</Text>

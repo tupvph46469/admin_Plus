@@ -28,6 +28,8 @@ import LoginScreen from './screens/LoginScreen';
 import TopProductsScreen from './screensmini/TopProductsScreen';
 import ReportByTableScreen from './screens/ReportByTableScreen';
 
+import TableManagementScreen from './screens/TableManageScreen';
+import TableDetailScreen from './screens/TableDetailScreen';
 import { navigationRef } from './services/navigationService';
 
 const Tab = createBottomTabNavigator();
@@ -114,7 +116,7 @@ export default function App() {
         <Stack.Screen name="Chi tiết khu vực" component={DetailArea} options={{ headerTitleAlign: "center" }} />
         <Stack.Screen name="Thêm khu vực" component={AddArea} options={{ headerTitleAlign: "center" }} />
 
-        <Stack.Screen name="Thông tin nhà hàng" component={RestaurantInfoScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Thông tin nhà hàng" component={RestaurantInfoScreen} options={{ headerTitleAlign: "center", title:"Thông tin câu lạc bộ" }}  />
         <Stack.Screen name="List giờ chơi" component={ListPlayPriceScreen} options={{ headerTitleAlign: "center" }} />
         <Stack.Screen name="Add giờ chơi" component={AddPlayScreen} options={{ headerTitleAlign: "center" }} />
 
@@ -126,6 +128,11 @@ export default function App() {
           component={ReportByTableScreen}
           options={{ title: "Doanh thu theo bàn", headerTitleAlign: "center" }}
         />
+               <Stack.Screen name="Bàn chơi" component={TableManagementScreen}  options={{
+    title: "Bàn chơi",
+    headerTitleAlign: "center", // đưa tiêu đề ra giữa
+  }} />
+       <Stack.Screen name="TableDetailScreen" component={TableDetailScreen} options={{ title: 'Chi tiết bàn' , headerTitleAlign: "center"}} />
 
       </Stack.Navigator>
     </NavigationContainer>
