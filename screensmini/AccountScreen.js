@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 
 const user = {
   name: 'Kiều Khánh Duy',
-  role: 'Chủ Câu lạc bộ',
+  role: 'Chủ Quán',
   phone: '0388612918',
   email: 'kkduy24@gmail.com',
 };

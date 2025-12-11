@@ -11,35 +11,35 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  Modal, FlatList 
+  Modal,
+  FlatList,
+  Image,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { tableService } from '../services/tableService';
 import { listAreas } from '../services/areaService';
+import { CONFIG } from '../constants/config';
 
 const STATUS_META = {
-  available: { label: 'Trống', color: '#34C759' },
-  playing: { label: 'Đang chơi', color: '#007AFF' },
-  reserved: { label: 'Đã đặt', color: '#5856D6' },
-  maintenance: { label: 'Bảo trì', color: '#FF9500' },
+  available: { label: 'Trống', color: '#10b981' },
+  playing: { label: 'Đang chơi', color: '#0284c7' },
+  reserved: { label: 'Đã đặt', color: '#7c3aed' },
+  maintenance: { label: 'Bảo trì', color: '#f59e0b' },
 };
 
 export default function TableDetailScreen({ route, navigation }) {
   const { tableId } = route.params || {};
   const [loading, setLoading] = useState(true);
   const [tableDetails, setTableDetails] = useState(null);
-
   const [areas, setAreas] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [areaPickerVisible, setAreaPickerVisible] = useState(false);
 
   // editable fields
   const [name, setName] = useState('');
-  const [ratePerHour, setRatePerHour] = useState(''); // keep as string for input
+  const [ratePerHour, setRatePerHour] = useState('');
   const [areaId, setAreaId] = useState(null);
-
-  const [areaPickerVisible, setAreaPickerVisible] = useState(false);
 
   useEffect(() => {
     loadAll();
@@ -63,7 +63,6 @@ export default function TableDetailScreen({ route, navigation }) {
         setName(data.name || '');
         setRatePerHour(data.ratePerHour != null ? String(data.ratePerHour) : '');
         const aid = data.areaId?.id || data.areaId?._id || data.areaId || null;
-        // if areaId not in areasData, keep it (but we prefer selecting first area if null)
         if (aid) setAreaId(aid);
         else if (areasData.length) setAreaId(areasData[0].id || areasData[0]._id);
       } else {
@@ -78,7 +77,6 @@ export default function TableDetailScreen({ route, navigation }) {
   };
 
   const handleToggleEdit = () => {
-    // initialize fields from current details when enter edit mode
     if (!isEditing && tableDetails) {
       setName(tableDetails.name || '');
       setRatePerHour(tableDetails.ratePerHour != null ? String(tableDetails.ratePerHour) : '');
@@ -90,7 +88,6 @@ export default function TableDetailScreen({ route, navigation }) {
   };
 
   const handleSave = async () => {
-    // validation
     if (!name || !name.trim()) {
       Alert.alert('Lỗi', 'Tên bàn không được để trống.');
       return;
@@ -101,7 +98,7 @@ export default function TableDetailScreen({ route, navigation }) {
       return;
     }
     if (!areaId) {
-      Alert.alert('Lỗi', 'Vui lòng chọn khu vực (không được để trống).');
+      Alert.alert('Lỗi', 'Vui lòng chọn khu vực.');
       return;
     }
 
@@ -114,7 +111,7 @@ export default function TableDetailScreen({ route, navigation }) {
     setSaving(true);
     try {
       await tableService.update(tableId, payload);
-      await loadAll(); // reload from server to ensure consistency
+      await loadAll();
       setIsEditing(false);
       Alert.alert('Thành công', 'Cập nhật thông tin bàn thành công.');
     } catch (err) {
@@ -161,12 +158,24 @@ export default function TableDetailScreen({ route, navigation }) {
     return `${minutes}m`;
   };
 
+  const getAreaName = () => {
+    const area = areas.find(a => (a.id || a._id || a).toString() === String(areaId));
+    return area ? area.name : (areas.length ? 'Chọn khu vực' : 'Không có khu vực');
+  };
+
+  const formatRateDisplay = (r) => {
+    if (r == null) return 'N/A';
+    const n = Number(r);
+    if (Number.isNaN(n)) return r;
+    return `${n.toLocaleString('vi-VN')} đ`;
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" />
-          <Text style={{ marginTop: 8 }}>Đang tải...</Text>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#0284c7" />
+          <Text style={styles.loadingText}>Đang tải...</Text>
         </View>
       </SafeAreaView>
     );
@@ -175,175 +184,225 @@ export default function TableDetailScreen({ route, navigation }) {
   if (!tableDetails) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <Text>Không tìm thấy bàn.</Text>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Không tìm thấy bàn.</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   const { currentSession } = tableDetails;
-  const sessionId = currentSession?.id;
-  const itemsCount = currentSession?.itemsCount ?? 0;
-  const timeUsed = currentSession?.startTime ? calculateTimeUsed(currentSession.startTime) : 'Chưa có';
-
+  const timeUsed = currentSession?.startTime ? calculateTimeUsed(currentSession.startTime) : 'Chưa có phiên';
   const statusKey = tableDetails.status;
   const statusMeta = STATUS_META[statusKey] || { label: statusKey, color: '#999' };
 
-  // displayed rate formatting helper
-  const formatRateDisplay = (r) => {
-    if (r == null) return '-';
-    const n = Number(r);
-    if (Number.isNaN(n)) return r;
-    return `${(n / 1000).toFixed(0)}k/h`;
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* header */}
-        <View style={styles.headerRow}>
-          <Text style={styles.titleText}>{tableDetails.name}</Text>
-          <View style={[styles.badge, { backgroundColor: statusMeta.color }]}>
-            <Text style={styles.badgeText}>{statusMeta.label}</Text>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.headerSection}>
+          <View style={styles.headerContent}>
+            <Text style={styles.titleText}>{tableDetails.name}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusMeta.color }]}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusBadgeText}>{statusMeta.label}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Area (editable only when isEditing) */}
-{/* Area (editable only when isEditing) - custom picker (modal) */}
-<View style={styles.card}>
-  <Text style={styles.label}>Khu vực</Text>
-
-  {!isEditing ? (
-    <Text style={styles.value}>{tableDetails.areaId?.name || ''}</Text>
-  ) : (
-    <>
-      <TouchableOpacity
-        style={styles.customPickerTouch}
-        onPress={() => setAreaPickerVisible(true)}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.customPickerText, !areaId && { color: '#999' }]}>
-          {(() => {
-            // find display name
-            const s = areas.find(a => (a.id || a._id || a).toString() === String(areaId));
-            return s ? s.name : (areas.length ? 'Chọn khu vực' : 'Không có khu vực');
-          })()}
-        </Text>
-        <Text style={styles.customPickerChevron}>▾</Text>
-      </TouchableOpacity>
-
-      {/* Modal listing areas */}
-      <Modal
-        visible={areaPickerVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => setAreaPickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Chọn khu vực</Text>
-            <FlatList
-              data={areas}
-              keyExtractor={(a) => (a.id || a._id || a).toString()}
-              renderItem={({ item }) => {
-                const aid = (item.id || item._id || item).toString();
-                const selected = String(aid) === String(areaId);
-                return (
-                  <TouchableOpacity
-                    style={[styles.areaRow, selected && styles.areaRowSelected]}
-                    onPress={() => {
-                      setAreaId(aid);
-                      setAreaPickerVisible(false);
-                    }}
-                  >
-                    <Text style={[styles.areaRowText, selected && { color: '#fff' }]}>{item.name}</Text>
-                  </TouchableOpacity>
-                );
-              }}
-              ItemSeparatorComponent={() => <View style={styles.sep} />}
-              showsVerticalScrollIndicator={false}
-            />
-            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setAreaPickerVisible(false)}>
-              <Text style={styles.modalCloseText}>Đóng</Text>
+        {/* Area Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.label}>📍 Khu vực</Text>
+          </View>
+          {!isEditing ? (
+            <Text style={styles.value}>{tableDetails.areaId?.name || 'N/A'}</Text>
+          ) : (
+            <TouchableOpacity
+              style={styles.customPicker}
+              onPress={() => setAreaPickerVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.pickerText, !areaId && styles.placeholderText]}>
+                {getAreaName()}
+              </Text>
+              <Text style={styles.chevron}>▼</Text>
             </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Area Modal */}
+        <Modal
+          visible={areaPickerVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setAreaPickerVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Chọn khu vực</Text>
+                <TouchableOpacity onPress={() => setAreaPickerVisible(false)}>
+                  <Text style={styles.modalCloseIcon}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <FlatList
+                data={areas}
+                keyExtractor={(a) => (a.id || a._id || a).toString()}
+                scrollEnabled={areas.length > 5}
+                renderItem={({ item }) => {
+                  const aid = (item.id || item._id || item).toString();
+                  const selected = String(aid) === String(areaId);
+                  return (
+                    <TouchableOpacity
+                      style={[styles.areaOption, selected && styles.areaOptionSelected]}
+                      onPress={() => {
+                        setAreaId(aid);
+                        setAreaPickerVisible(false);
+                      }}
+                    >
+                      <Text style={[styles.areaOptionText, selected && styles.areaOptionTextSelected]}>
+                        {item.name}
+                      </Text>
+                      {selected && <Text style={styles.checkmark}>✓</Text>}
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            </View>
           </View>
-        </View>
-      </Modal>
-    </>
-  )}
-</View>
+        </Modal>
 
-        {/* Status (read-only) */}
+        {/* Table Name Card */}
         <View style={styles.card}>
-          <Text style={styles.label}>Trạng thái</Text>
-          <Text style={styles.value}>{statusMeta.label}</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.label}>🎱 Tên bàn</Text>
+          </View>
+          {!isEditing ? (
+            <Text style={styles.value}>{tableDetails.name}</Text>
+          ) : (
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              style={styles.input}
+              placeholder="Ví dụ: Bàn 1"
+              placeholderTextColor="#999"
+            />
+          )}
         </View>
 
-        {/* Rate (editable) */}
+        {/* Rate Card */}
         <View style={styles.card}>
-          <Text style={styles.label}>Giá / giờ (VNĐ)</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.label}>💰 Giá/giờ</Text>
+          </View>
           {!isEditing ? (
             <Text style={styles.value}>{formatRateDisplay(tableDetails.ratePerHour)}</Text>
           ) : (
             <TextInput
               value={ratePerHour}
-              onChangeText={(t) => setRatePerHour(t.replace(/[^0-9]/g, ''))} // only digits
+              onChangeText={(t) => setRatePerHour(t.replace(/[^0-9]/g, ''))}
               style={styles.input}
               keyboardType="numeric"
               placeholder="Ví dụ: 80000"
+              placeholderTextColor="#999"
             />
           )}
         </View>
 
-        {/* Session info (read-only) */}
+        {/* Current Session Card */}
         <View style={styles.card}>
-          <Text style={styles.label}>Phiên hiện tại</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.label}>⏱️ Phiên hiện tại</Text>
+          </View>
           {currentSession ? (
             <>
-              <Text style={styles.value}>Session ID: {sessionId}</Text>
-              <Text style={styles.value}>Thời gian: {timeUsed}</Text>
-              <Text style={styles.value}>Số món: {itemsCount}</Text>
+              <View style={styles.sessionInfo}>
+                <Text style={styles.sessionTime}>Thời gian: {timeUsed}</Text>
+              </View>
+
+              {currentSession.items?.length > 0 ? (
+                <FlatList
+                  data={currentSession.items}
+                  keyExtractor={(item) => item._id}
+                  scrollEnabled={false}
+                  renderItem={({ item }) => {
+                    const imagePath =
+                      item.imageSnapshot ||
+                      (item.product?.images?.length ? item.product.images[0] : null);
+                    const imageUri = imagePath ? `${CONFIG.baseURL}${imagePath}` : null;
+
+                    return (
+                      <View style={styles.itemRow}>
+                        <View style={styles.itemImageContainer}>
+                          {imageUri ? (
+                            <Image source={{ uri: imageUri }} style={styles.itemImage} />
+                          ) : (
+                            <View style={styles.itemImagePlaceholder} />
+                          )}
+                        </View>
+                        <View style={styles.itemDetails}>
+                          <Text style={styles.itemName}>{item.nameSnapshot}</Text>
+                          <View style={styles.itemMetaRow}>
+                            <Text style={styles.itemMeta}>SL: {item.qty}</Text>
+                            <Text style={styles.itemMetaDivider}>•</Text>
+                            <Text style={styles.itemMeta}>
+                              {item.priceSnapshot.toLocaleString('vi-VN')} đ
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  }}
+                />
+              ) : (
+                <Text style={styles.emptyText}>Không có sản phẩm</Text>
+              )}
             </>
           ) : (
             <Text style={styles.value}>Không có phiên đang mở</Text>
           )}
         </View>
 
-        {/* Name (editable) */}
-        <View style={styles.card}>
-          <Text style={styles.label}>Tên bàn</Text>
+        {/* Action Buttons */}
+        <View style={styles.actionsSection}>
           {!isEditing ? (
-            <Text style={[styles.value, { fontSize: 20 }]}>{tableDetails.name}</Text>
-          ) : (
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              style={[styles.input, { fontSize: 18 }]}
-              placeholder="Tên bàn"
-            />
-          )}
-        </View>
-
-        {/* action buttons */}
-        <View style={styles.actions}>
-          {!isEditing ? (
-            <TouchableOpacity style={[styles.btn, styles.btnEdit]} onPress={handleToggleEdit}>
+            <TouchableOpacity
+              style={[styles.btn, styles.btnEdit]}
+              onPress={handleToggleEdit}
+            >
               <Text style={styles.btnEditText}>Chỉnh sửa</Text>
             </TouchableOpacity>
           ) : (
             <>
-              <TouchableOpacity style={[styles.btn, styles.btnSave]} onPress={handleSave} disabled={saving}>
-                {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnSaveText}>Lưu</Text>}
+              <TouchableOpacity
+                style={[styles.btn, styles.btnSave]}
+                onPress={handleSave}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.btnSaveText}>Lưu</Text>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.btn, styles.btnCancel]}
                 onPress={() => {
-                  // revert fields
                   setName(tableDetails.name || '');
-                  setRatePerHour(tableDetails.ratePerHour != null ? String(tableDetails.ratePerHour) : '');
-                  const aid = tableDetails.areaId?.id || tableDetails.areaId?._id || tableDetails.areaId || null;
+                  setRatePerHour(
+                    tableDetails.ratePerHour != null ? String(tableDetails.ratePerHour) : ''
+                  );
+                  const aid =
+                    tableDetails.areaId?.id ||
+                    tableDetails.areaId?._id ||
+                    tableDetails.areaId ||
+                    null;
                   setAreaId(aid);
                   setIsEditing(false);
                 }}
@@ -353,11 +412,19 @@ export default function TableDetailScreen({ route, navigation }) {
               </TouchableOpacity>
             </>
           )}
-
-          <TouchableOpacity style={[styles.btn, styles.btnDelete]} onPress={handleDelete} disabled={deleting}>
-            {deleting ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnDeleteText}>Xóa</Text>}
-          </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={[styles.btn, styles.btnDelete]}
+          onPress={handleDelete}
+          disabled={deleting}
+        >
+          {deleting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.btnDeleteText}>Xóa bàn</Text>
+          )}
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -365,134 +432,319 @@ export default function TableDetailScreen({ route, navigation }) {
 
 /* Styles */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f5f8' },
-  content: { padding: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  content: {
+    padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
 
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  titleText: { fontSize: 28, fontWeight: '700', color: '#222' },
-  badge: { position: 'absolute', right: 16, top: 0, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20 },
-  badgeText: { color: '#fff', fontWeight: '700' },
+  // Header
+  headerSection: {
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  titleText: {
+    paddingLeft: 100,
+    textAlign:'center',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    flex: 1,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    gap: 8,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    opacity: 0.9,
+  },
+  statusBadgeText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 
+  // Cards
   card: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
-  label: { fontSize: 12, color: '#666', marginBottom: 6 },
-  value: { fontSize: 16, color: '#222', fontWeight: '600' },
+  cardHeader: {
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    letterSpacing: 0.3,
+  },
+  value: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginTop: 6,
+  },
 
+  // Inputs
   input: {
     height: 44,
     borderWidth: 1,
-    borderColor: '#e6e6ea',
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    paddingHorizontal: 14,
     backgroundColor: '#fff',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1a1a1a',
+    marginTop: 8,
   },
 
-  pickerContainer: {
-  // keep the card padding outside; this container should be full-width and no inner padding
-  width: '100%',
-  borderRadius: 8,
-  overflow: 'hidden',
-  backgroundColor: '#fff',      // match card bg so it looks consistent
-  borderWidth: 1,
-  borderColor: '#e6e6ea',
-},
+  // Custom Picker
+  customPicker: {
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    marginTop: 8,
+  },
+  pickerText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1a1a1a',
+  },
+  placeholderText: {
+    color: '#999',
+  },
+  chevron: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
 
-picker: {
-  height: 44,                   // important: fixed height
-  width: '100%',                // ensures full width
-  backgroundColor: 'transparent',
-},
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '75%',
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  modalCloseIcon: {
+    fontSize: 24,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  areaOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  areaOptionSelected: {
+    backgroundColor: '#eff6ff',
+    borderLeftWidth: 3,
+    borderLeftColor: '#0284c7',
+    paddingLeft: 13,
+  },
+  areaOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  areaOptionTextSelected: {
+    color: '#0284c7',
+    fontWeight: '600',
+  },
+  checkmark: {
+    fontSize: 18,
+    color: '#0284c7',
+    fontWeight: '700',
+  },
 
-pickerItem: {
-  // only applies to Android's item styling
-  height: 44,
-  color: '#222',
-},
+  // Session
+  sessionInfo: {
+    backgroundColor: '#f3f4f6',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  sessionTime: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  itemImageContainer: {
+    marginRight: 12,
+  },
+  itemImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    backgroundColor: '#f3f4f6',
+  },
+  itemImagePlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    backgroundColor: '#e5e7eb',
+  },
+  itemDetails: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  itemMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  itemMeta: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  itemMetaDivider: {
+    color: '#d1d5db',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
 
-  actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-
-  btn: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, minWidth: 100, alignItems: 'center', marginHorizontal: 6 },
-
-  btnEdit: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#007AFF' },
-  btnEditText: { color: '#007AFF', fontWeight: '700' },
-
-  btnSave: { backgroundColor: '#007AFF' },
-  btnSaveText: { color: '#fff', fontWeight: '700' },
-
-  btnCancel: { backgroundColor: '#f2f2f2' },
-  btnCancelText: { color: '#333', fontWeight: '700' },
-
-  btnDelete: { backgroundColor: '#ff3b30' },
-  btnDeleteText: { color: '#fff', fontWeight: '700' },
-  customPickerTouch: {
-  height: 44,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: '#e6e6ea',
-  paddingHorizontal: 12,
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  backgroundColor: '#fff',
-},
-customPickerText: {
-  fontSize: 16,
-  color: '#222',
-},
-customPickerChevron: {
-  fontSize: 18,
-  color: '#666',
-  marginLeft: 8,
-},
-
-/* Modal styles */
-modalOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.4)',
-  justifyContent: 'center',
-  paddingHorizontal: 20,
-},
-modalBox: {
-  maxHeight: '70%',
-  backgroundColor: '#fff',
-  borderRadius: 12,
-  padding: 12,
-},
-modalTitle: {
-  fontSize: 16,
-  fontWeight: '700',
-  marginBottom: 8,
-},
-areaRow: {
-  paddingVertical: 12,
-  paddingHorizontal: 8,
-  borderRadius: 8,
-},
-areaRowSelected: {
-  backgroundColor: '#007AFF',
-},
-areaRowText: {
-  fontSize: 16,
-},
-sep: { height: 8 },
-modalCloseBtn: {
-  marginTop: 10,
-  alignSelf: 'flex-end',
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  borderRadius: 8,
-},
-modalCloseText: { color: '#007AFF', fontWeight: '700' },
-
+  // Actions
+  actionsSection: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  btn: {
+    height: 44,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: '600',
+  },
+  btnEdit: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#0284c7',
+  },
+  btnEditText: {
+    color: '#0284c7',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  btnSave: {
+    flex: 1,
+    backgroundColor: '#10b981',
+  },
+  btnSaveText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  btnCancel: {
+    flex: 1,
+    backgroundColor: '#f3f4f6',
+  },
+  btnCancelText: {
+    color: '#374151',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  btnDelete: {
+    height: 44,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnDeleteText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
 });
-

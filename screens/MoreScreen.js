@@ -29,16 +29,7 @@ const menuData = [
     color: "#9C27B0",
     children: ["Khu vực", "Bàn chơi"],
   },
-  {
-    title: "Thiết lập câu lạc bộ bi-a",
-    icon: "settings-outline",
-    color: "#666",
-    children: [
-      "Thông tin câu lạc bộ",
-      "Tài khoản người dùng",
-      "Thiết lập ngôn ngữ",
-    ],
-  },
+ 
   {
     title: "Đăng xuất",
     icon: "log-out-outline",
@@ -119,7 +110,7 @@ export default function MoreScreen({ navigation }) {
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.name}>Kiều Khánh Duy</Text>
-          <Text style={styles.role}>Chủ Câu lạc bộ</Text>
+          <Text style={styles.role}>Chủ Quán</Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#ccc" />
       </TouchableOpacity>
