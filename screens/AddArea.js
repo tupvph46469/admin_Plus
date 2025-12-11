@@ -8,8 +8,13 @@ import {
   Switch,
   ScrollView,
   Alert,
+  // ✅ THÊM ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+// ✅ IMPORT HÀM API THÊM MỚI
+import { addArea } from '../services/areaService'; // Giả định đường dẫn và tên hàm
 
 // This screen is used for both Add and Edit of an Area object.
 // Fields supported: _id, name, code, color, orderIndex, active, createdAt, updatedAt
@@ -24,8 +29,10 @@ export default function AddArea({ navigation }) {
   };
 
   const [area, setArea] = useState(initial);
+  // ✅ THÊM TRẠNG THÁI LOADING
+  const [loading, setLoading] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const COLORS = ['#4CAF50','#FF9800','#F44336','#2196F3','#9C27B0','#FFC107','#607D8B','#E91E63','#00BCD4'];
+  const COLORS = ['#4CAF50', '#FF9800', '#F44336', '#2196F3', '#9C27B0', '#FFC107', '#607D8B', '#E91E63', '#00BCD4'];
 
   useEffect(() => {
     navigation.setOptions({ title: 'Thêm khu vực' });
@@ -33,11 +40,40 @@ export default function AddArea({ navigation }) {
 
   const setField = (key, value) => setArea((s) => ({ ...s, [key]: value }));
 
-  const onSave = () => {
-    // TODO: call API to create new area
-    Alert.alert('Lưu', `Đã tạo khu vực \n${area.name} (${area.code})`, [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
+  // --- HÀM GỌI API THÊM MỚI ---
+  const onSave = async () => {
+    // 1. Kiểm tra đầu vào
+    if (!area.name.trim() || !area.code.trim()) {
+      Alert.alert('Lỗi', 'Tên và Code không được để trống.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 2. Chuẩn hóa dữ liệu
+      const dataToCreate = {
+        name: area.name.trim(),
+        code: area.code.trim(),
+        color: area.color,
+        // Đảm bảo orderIndex là số
+        orderIndex: Number(area.orderIndex || 0),
+        // Đảm bảo active là boolean
+        active: !!area.active,
+      };
+
+      // 3. Gọi API
+      await addArea(dataToCreate);
+
+      // 4. Thành công
+      Alert.alert('Thành công', `Khu vực "${area.name}" đã được tạo.`, [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (error) {
+      console.error('Lỗi khi thêm khu vực:', error);
+      Alert.alert('Lỗi', 'Không thể thêm khu vực. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,10 +81,7 @@ export default function AddArea({ navigation }) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
           <View style={styles.rowHeader}>
-            {/* <Text style={styles.title}>Thông tin Khu vực</Text>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="close" size={22} color="#333" />
-            </TouchableOpacity> */}
+            {/* Commented header section remains unchanged */}
           </View>
 
           {/* create mode — no _id / createdAt / updatedAt fields */}
@@ -71,7 +104,7 @@ export default function AddArea({ navigation }) {
           <Text style={styles.label}>Màu</Text>
           <View style={styles.colorRow}>
             <TextInput
-              style={[styles.input, { marginRight: 8 }]}
+              style={[styles.input, { flex: 1, marginRight: 8 }]}
               value={area.color}
               onChangeText={(t) => setField('color', t)}
               placeholder="#4CAF50"
@@ -115,11 +148,24 @@ export default function AddArea({ navigation }) {
           </View>
 
           <View style={styles.actions}>
-            <TouchableOpacity style={[styles.btn, styles.cancel]} onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              style={[styles.btn, styles.cancel]}
+              onPress={() => navigation.goBack()}
+              disabled={loading} // Vô hiệu hóa khi đang tải
+            >
               <Text style={styles.btnText}>Hủy</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.btn, styles.save]} onPress={onSave}>
-              <Text style={[styles.btnText, { color: '#fff' }]}>Tạo</Text>
+            <TouchableOpacity
+              style={[styles.btn, styles.save]}
+              onPress={onSave}
+              disabled={loading} // Vô hiệu hóa khi đang tải
+            >
+              {loading ? (
+                // ✅ HIỂN THỊ LOADING
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={[styles.btnText, { color: '#fff' }]}>Tạo</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -129,12 +175,12 @@ export default function AddArea({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#f9f9f9' }, // Sửa màu nền để nhất quán
   content: { padding: 16, paddingBottom: 40 },
   card: { backgroundColor: '#fff', borderRadius: 8, padding: 12 },
   rowHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 18, fontWeight: '700', color: '#333', marginBottom: 12 },
-  label: { color: '#666', marginTop: 10 },
+  label: { color: '#666', marginTop: 10, fontWeight: '600' }, // Thêm fontWeight
   input: {
     marginTop: 6,
     borderWidth: 1,
@@ -144,6 +190,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 15,
     color: '#333',
+    flex: 1, // Fix TextInput chiếm toàn bộ chiều rộng
   },
   readonly: { backgroundColor: '#fafafa', color: '#666' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 },
@@ -167,6 +214,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
+    paddingVertical: 5,
   },
   colorBtn: {
     width: 36,

@@ -22,7 +22,7 @@ export async function getArea(id) {
   }
 }
 
-export async function createArea(areaData) {
+export async function addArea (areaData) {
   try {
     const { data } = await api.post("/areas", areaData);
     return data;

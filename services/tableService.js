@@ -26,6 +26,23 @@ export const tableService = {
       throw error;
     }
   },
+  hasInArea: async (areaId) => {
+    try {
+      console.log('📋 [Table] Checking tables in area:', areaId);
+      // Gọi API để lấy danh sách bàn theo khu vực, chỉ cần 1 item để kiểm tra tồn tại
+      const response = await api.get('/tables', { params: { areaId: areaId, limit: 1 } });
+
+      // Giả sử API trả về đối tượng có thuộc tính 'total' hoặc 'data' là mảng
+      const count = response.data.total || response.data.data?.length || response.data.length;
+
+      console.log('✅ [Table] Has in area success (Count):', count);
+      return count > 0;
+    } catch (error) {
+      console.log('❌ [Table] Has in area error:', error);
+      // Nếu có lỗi API, trả về true để ngăn xóa nhầm khu vực
+      throw error;
+    }
+  },
 
   // Tạo bàn mới (Admin only)
   create: async (data) => {
@@ -122,3 +139,4 @@ export const tableService = {
 // Backward compatibility với code cũ
 export const listTables = tableService.list;
 export const getTable = tableService.getById;
+export const hasTablesInArea = tableService.hasInArea;
