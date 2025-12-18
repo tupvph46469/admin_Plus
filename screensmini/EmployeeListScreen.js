@@ -44,7 +44,7 @@ export default function EmployeeListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Danh sách nhân viên</Text>
+      <Text style={styles.title}>Danh sách tài khoản</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#007AFF" />
@@ -73,7 +73,7 @@ export default function EmployeeListScreen({ navigation }) {
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{item.name || item.username}</Text>
                 <Text style={styles.role}>
-                  {item.role === "staff" ? "Nhân viên" : "Quản trị"}
+                  {item.role === "staff" ? "Lễ tân" : "Quản trị"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -91,7 +91,7 @@ export default function EmployeeListScreen({ navigation }) {
         style={styles.createButton}
         onPress={() => navigation.navigate("Form nhân viên", { mode: "add" })}
       >
-        <Text style={styles.createText}>+ Tạo tài khoản nhân viên</Text>
+        <Text style={styles.createText}>+ Tạo tài khoản</Text>
       </TouchableOpacity>
     </View>
   );

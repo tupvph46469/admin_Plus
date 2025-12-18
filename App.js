@@ -27,7 +27,9 @@ import AccountScreen from './screensmini/AccountScreen';
 import LoginScreen from './screens/LoginScreen';
 import TopProductsScreen from './screensmini/TopProductsScreen';
 import ReportByTableScreen from './screens/ReportByTableScreen';
-
+import PromotionScreen from './screens/PromotionScreen';
+import PromotionFormScreen from './screens/PromotionFormScreen';
+import PromotionDetailScreen from './screens/PromotionDetailScreen';
 import TableManagementScreen from './screens/TableManageScreen';
 import TableDetailScreen from './screens/TableDetailScreen';
 import { navigationRef } from './services/navigationService';
@@ -50,7 +52,7 @@ function TabNavigator() {
           if (route.name === "Tổng quan") iconName = "home";
           else if (route.name === "Báo cáo") iconName = "bar-chart";
           else if (route.name === "Hoá đơn") iconName = "receipt";
-          else if (route.name === "Thêm") iconName = "menu";
+          else if (route.name === "Quản lý") iconName = "settings";
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -61,7 +63,7 @@ function TabNavigator() {
       <Tab.Screen name="Tổng quan" component={OverviewScreen} />
       <Tab.Screen name="Báo cáo" component={ReportScreen} />
       <Tab.Screen name="Hoá đơn" component={InvoiceScreen} />
-      <Tab.Screen name="Thêm" component={MoreScreen} />
+      <Tab.Screen name="Quản lý" component={MoreScreen} />
     </Tab.Navigator>
   );
 }
@@ -107,6 +109,10 @@ export default function App() {
         <Stack.Screen name="Mặt hàng" component={ItemListScreen} options={{ headerTitleAlign: "center" }} />
         <Stack.Screen name="Chi tiết mặt hàng" component={ItemDetailScreen} options={{ headerTitleAlign: "center" }} />
         <Stack.Screen name="Thêm mặt hàng" component={AddItemScreen} options={{ headerTitleAlign: "center" }} />
+
+        <Stack.Screen name="Khuyến mãi" component={PromotionScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="PromotionDetail" component={PromotionDetailScreen} options={{ headerTitleAlign: "center", title: "Chi tiết khuyến mãi" }} />
+        <Stack.Screen name="PromotionForm" component={PromotionFormScreen} options={{ headerTitleAlign: "center", title: "Form khuyến mãi" }} />
 
         <Stack.Screen name="Nhân viên" component={EmployeeListScreen} options={{ headerTitleAlign: "center" }} />
         <Stack.Screen name="Chi tiết nhân viên" component={EmployeeDetailScreen} options={{ headerTitleAlign: "center" }} />

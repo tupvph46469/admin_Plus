@@ -9,7 +9,6 @@ const reportData = [
     color: '#007AFF',
     children: [
       { label: 'Báo cáo doanh thu tổng quan', route: 'Tổng quan' },
-      { label: 'Báo cáo doanh thu theo phương thức thanh toán' },
       { label: 'Báo cáo doanh thu theo bàn chơi', route: 'ReportByTable' },
     ],
   },
@@ -18,29 +17,9 @@ const reportData = [
     icon: 'cube',
     color: '#FF6B35',
     children: [
-      { label: 'Danh mục mặt hàng' },
+    
       { label: 'Mặt hàng bán chạy', route: 'TopProducts' },
-      { label: 'Combo bán chạy' },
-      { label: 'Mặt hàng đã hủy' },
-      { label: 'Combo đã hủy' },
-    ],
-  },
-  {
-    title: 'BÁO CÁO KHO HÀNG',
-    icon: 'archive',
-    color: '#9C27B0',
-    children: [
-      { label: 'Tồn kho tổng hợp' },
-    ],
-  },
-  {
-    title: 'BÁO CÁO TÀI CHÍNH',
-    icon: 'cash',
-    color: '#28a745',
-    children: [
-      { label: 'Kết quả kinh doanh' },
-      { label: 'Lợi nhuận theo mặt hàng' },
-      { label: 'Lợi nhuận theo Combo' },
+    
     ],
   },
 
@@ -49,7 +28,7 @@ const reportData = [
     icon: 'gift',
     color: '#FF1744',
     children: [
-      { label: 'Chương trình khuyến mãi' },
+      { label: 'Chương trình khuyến mãi',route: 'Khuyến mãi' },
     ],
   }
 ];

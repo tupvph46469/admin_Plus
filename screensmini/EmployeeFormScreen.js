@@ -167,11 +167,11 @@ export default function EmployeeFormScreen({ route, navigation }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <Text style={styles.title}>
-        {isAddMode ? 'Tạo tài khoản nhân viên' : 'Chi tiết nhân viên'}
+        {isAddMode ? 'Tạo tài khoản' : 'Chi tiết tài khoản'}
       </Text>
 
       {/* Họ tên */}
-      <Text style={styles.label}>Họ và tên nhân viên (*)</Text>
+      <Text style={styles.label}>Họ và tên (*)</Text>
       <TextInput
         style={styles.input}
         value={fullName}
@@ -237,7 +237,7 @@ export default function EmployeeFormScreen({ route, navigation }) {
   disabled={loading}
 >
   <Text style={styles.roleText}>
-    {role === 'staff' ? 'Nhân viên' : 'Quản trị'}
+    {role === 'staff' ? 'Lễ tân' : 'Quản trị'}
   </Text>
 </TouchableOpacity>
 
