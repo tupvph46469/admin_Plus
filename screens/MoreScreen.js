@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authService } from "../services/authService";
 
 const menuData = [
@@ -29,7 +30,6 @@ const menuData = [
     color: "#9C27B0",
     children: ["Khu vực", "Bàn chơi"],
   },
- 
   {
     title: "Đăng xuất",
     icon: "log-out-outline",
@@ -40,85 +40,84 @@ const menuData = [
 
 export default function MoreScreen({ navigation }) {
   const [expandedIndex, setExpandedIndex] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    loadUser();
+
+    // reload khi quay lại màn
+    const unsubscribe = navigation.addListener("focus", loadUser);
+    return unsubscribe;
+  }, [navigation]);
+
+  const loadUser = async () => {
+    const str = await AsyncStorage.getItem("user");
+    if (str) {
+      setUser(JSON.parse(str));
+    }
+  };
 
   const toggleExpand = (index) => {
     setExpandedIndex(index === expandedIndex ? null : index);
   };
 
   const confirmLogout = () => {
-    Alert.alert(
-      "Xác nhận",
-      "Bạn có chắc muốn đăng xuất?",
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: "Đăng xuất",
-          style: "destructive",
-          onPress: handleLogout,
-        },
-      ]
-    );
+    Alert.alert("Xác nhận", "Bạn có chắc muốn đăng xuất?", [
+      { text: "Huỷ", style: "cancel" },
+      {
+        text: "Đăng xuất",
+        style: "destructive",
+        onPress: handleLogout,
+      },
+    ]);
   };
 
   const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch (e) {
-      console.warn("Logout error (ignored):", e);
-    } finally {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Login" }],
-      });
-    }
+    await authService.logout();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Login" }],
+    });
   };
 
   const handleSubItemPress = (subItem) => {
     const routeMap = {
       "Mặt hàng": "Mặt hàng",
-      "Vai trò": "Vai trò",
       "Nhân viên": "Nhân viên",
-      "Thông tin nhà hàng": "Thông tin nhà hàng",
-      "Thiết lập ngôn ngữ": "Thiết lập ngôn ngữ",
-      "Giá giờ chơi": "List giờ chơi",
       "Khu vực": "Khu vực",
       "Bàn chơi": "Bàn chơi",
-      "Tài khoản người dùng": "Tài khoản",
-      "Thông tin câu lạc bộ": "Thông tin nhà hàng",
     };
 
     const route = routeMap[subItem];
-    if (route) {
-      navigation.navigate(route);
-    }
+    if (route) navigation.navigate(route);
   };
 
   return (
-    <ScrollView 
-      style={styles.container} 
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Profile Card */}
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {/* PROFILE */}
       <TouchableOpacity
         style={styles.profileCard}
         onPress={() => navigation.navigate("Tài khoản")}
-        activeOpacity={0.7}
       >
         <View style={styles.avatarCircle}>
           <Ionicons name="person" size={32} color="#007AFF" />
         </View>
+
         <View style={styles.profileInfo}>
-          <Text style={styles.name}>Kiều Khánh Duy</Text>
-          <Text style={styles.role}>Chủ Quán</Text>
+          <Text style={styles.name}>
+            {user?.name || user?.username || "—"}
+          </Text>
+          <Text style={styles.role}>
+            {user?.role === "admin" ? "Quản trị viên" : "Nhân viên"}
+          </Text>
         </View>
+
         <Ionicons name="chevron-forward" size={20} color="#ccc" />
       </TouchableOpacity>
 
-      {/* Menu Items */}
+      {/* MENU */}
       {menuData.map((item, index) => (
         <View key={index} style={styles.card}>
-          {/* Header */}
           <TouchableOpacity
             style={styles.item}
             onPress={() => {
@@ -128,7 +127,6 @@ export default function MoreScreen({ navigation }) {
               }
               toggleExpand(index);
             }}
-            activeOpacity={0.7}
           >
             <View style={styles.itemLeft}>
               <View style={[styles.iconCircle, { backgroundColor: item.color + "20" }]}>
@@ -136,29 +134,27 @@ export default function MoreScreen({ navigation }) {
               </View>
               <Text style={styles.itemText}>{item.title}</Text>
             </View>
-            {item.children.length > 0 && (
+
+            {item.children.length > 0 ? (
               <Ionicons
                 name={expandedIndex === index ? "chevron-up" : "chevron-down"}
                 size={22}
                 color="#666"
               />
-            )}
-            {item.children.length === 0 && (
+            ) : (
               <Ionicons name="chevron-forward" size={22} color="#666" />
             )}
           </TouchableOpacity>
 
-          {/* Sub List */}
           {expandedIndex === index && item.children.length > 0 && (
             <View style={styles.subList}>
-              {item.children.map((subItem, subIndex) => (
+              {item.children.map((sub, i) => (
                 <TouchableOpacity
-                  key={subIndex}
+                  key={i}
                   style={styles.subItem}
-                  onPress={() => handleSubItemPress(subItem)}
-                  activeOpacity={0.7}
+                  onPress={() => handleSubItemPress(sub)}
                 >
-                  <Text style={styles.subText}>{subItem}</Text>
+                  <Text style={styles.subText}>{sub}</Text>
                   <Ionicons name="chevron-forward" size={18} color="#999" />
                 </TouchableOpacity>
               ))}
@@ -166,23 +162,15 @@ export default function MoreScreen({ navigation }) {
           )}
         </View>
       ))}
-
-      {/* Bottom spacing */}
-      <View style={{ height: 80 }} />
     </ScrollView>
   );
 }
 
+/* ================= STYLE ================= */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  contentContainer: {
-    padding: 16,
-  },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  contentContainer: { padding: 16 },
 
-  // PROFILE CARD
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -190,11 +178,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   avatarCircle: {
     width: 60,
@@ -204,46 +187,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  profileInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  role: {
-    fontSize: 14,
-    color: "#666",
-  },
+  profileInfo: { flex: 1, marginLeft: 16 },
+  name: { fontSize: 18, fontWeight: "600", color: "#333" },
+  role: { fontSize: 14, color: "#666" },
 
-  // CARD
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
     overflow: "hidden",
   },
-
-  // ITEM
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
   },
-  itemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
+  itemLeft: { flexDirection: "row", alignItems: "center" },
   iconCircle: {
     width: 40,
     height: 40,
@@ -252,34 +212,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-  itemText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
-    flex: 1,
-  },
+  itemText: { fontSize: 16, fontWeight: "500" },
 
-  // SUB LIST
-  subList: {
-    backgroundColor: "#fff",
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
+  subList: { paddingVertical: 8 },
   subItem: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    marginHorizontal: 12,
-    marginVertical: 4,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 8,
+    padding: 16,
   },
-  subText: {
-    fontSize: 15,
-    color: "#333",
-    fontWeight: "500",
-    flex: 1,
-  },
+  subText: { fontSize: 15 },
 });

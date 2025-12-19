@@ -1,81 +1,194 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 
-const user = {
-  name: 'Kiều Khánh Duy',
-  role: 'Chủ Quán',
-  phone: '0388612918',
-  email: 'kkduy24@gmail.com',
-};
-
-const getInitials = (name) => {
-  const parts = name.split(' ');
-  return parts.length >= 2
-    ? parts[0][0] + parts[parts.length - 1][0]
-    : name[0];
-};
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { getEmployeeById } from "../services/userService";
 
 export default function AccountScreen() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    loadAccount();
+  }, []);
+
+  const loadAccount = async () => {
+    try {
+      const str = await AsyncStorage.getItem("user");
+      if (!str) {
+        Alert.alert("Lỗi", "Chưa đăng nhập");
+        return;
+      }
+
+      const localUser = JSON.parse(str);
+
+      if (localUser?.id) {
+        const freshUser = await getEmployeeById(localUser.id);
+        setUser(freshUser);
+        await AsyncStorage.setItem("user", JSON.stringify(freshUser));
+      } else {
+        setUser(localUser);
+      }
+    } catch (e) {
+      console.log("❌ Load account error:", e);
+      Alert.alert("Lỗi", "Không thể tải thông tin tài khoản");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.loading}>
+        <Text>Không có dữ liệu tài khoản</Text>
+      </View>
+    );
+  }
+
+  const initials = user.name
+    ?.split(" ")
+    .map(w => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
-    <View style={styles.container}>
-
-      <View style={styles.profile}>
+    <SafeAreaView style={styles.container}>
+      {/* HEADER */}
+      <View style={styles.header}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(user.name).toUpperCase()}</Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
-        <View>
-          <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.role}>{user.role}</Text>
-        </View>
+        <Text style={styles.name}>{user.name}</Text>
+        <Text style={styles.role}>
+          {user.role === "admin" ? "Quản trị viên" : "Nhân viên"}
+        </Text>
       </View>
 
-      <Text style={styles.section}>Thông tin tài khoản</Text>
-
-      <View style={styles.infoRow}>
-        <Text style={styles.label}>Họ và tên:</Text>
-        <Text style={styles.value}>{user.name}</Text>
+      {/* INFO CARD */}
+      <View style={styles.card}>
+        <InfoItem
+          icon="mail-outline"
+          label="Email"
+          value={user.email || "—"}
+        />
+        <InfoItem
+          icon="shield-checkmark-outline"
+          label="Vai trò"
+          value={user.role === "admin" ? "Quản trị viên" : "Nhân viên"}
+        />
+        <InfoItem
+          icon={user.active ? "checkmark-circle-outline" : "close-circle-outline"}
+          label="Trạng thái"
+          value={user.active ? "Đang hoạt động" : "Ngưng hoạt động"}
+          valueStyle={{
+            color: user.active ? "#16a34a" : "#dc2626",
+          }}
+        />
       </View>
+    </SafeAreaView>
+  );
+}
 
-      <View style={styles.infoRow}>
-        <Text style={styles.label}>Số điện thoại:</Text>
-        <Text style={styles.value}>{user.phone}</Text>
+function InfoItem({ icon, label, value, valueStyle }) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowLeft}>
+        <Ionicons name={icon} size={18} color="#64748b" />
+        <Text style={styles.label}>{label}</Text>
       </View>
-
-      <View style={styles.infoRow}>
-        <Text style={styles.label}>Email:</Text>
-        <Text style={styles.value}>{user.email || '(Chưa có)'}</Text>
-      </View>
+      <Text style={[styles.value, valueStyle]}>{value}</Text>
     </View>
   );
 }
 
+/* ================= STYLE ================= */
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  profile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 16,
+  },
+  loading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  /* HEADER */
+  header: {
+    alignItems: "center",
+    marginBottom: 24,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: "#E6EEF8",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  avatarText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  name: { fontSize: 18, fontWeight: '600', color: '#333' },
-  role: { fontSize: 14, color: '#777' },
-  section: { fontSize: 16, fontWeight: '600', marginBottom: 10, color: '#007AFF' },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
+  avatarText: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#16457A",
+  },
+  name: {
+    marginTop: 10,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+  },
+  role: {
+    marginTop: 4,
+    fontSize: 14,
+    color: "#64748b",
+  },
+
+  /* CARD */
+  card: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+  },
+
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderColor: "#e5e7eb",
   },
-  label: { fontSize: 15, color: '#555' },
-  value: { fontSize: 15, color: '#333', fontWeight: '500' },
+  rowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    color: "#475569",
+  },
+  value: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#111",
+  },
 });
