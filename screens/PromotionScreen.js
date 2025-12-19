@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useLayoutEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import promotionService from '../services/promotionService';
 
 const SCOPE_LABEL = {
@@ -18,22 +19,6 @@ const SCOPE_LABEL = {
 export default function PromotionScreen({ navigation }) {
   const [promotions, setPromotions] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-
-  /** ===== HEADER ➕ ===== */
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('PromotionForm', { mode: 'create' })
-          }
-          style={{ marginRight: 16 }}
-        >
-          <Text style={{ fontSize: 26, fontWeight: '600' }}>＋</Text>
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
 
   async function loadData() {
     const data = await promotionService.getPromotions({ sort: 'applyOrder' });
@@ -53,12 +38,12 @@ export default function PromotionScreen({ navigation }) {
   function renderItem({ item }) {
     return (
       <TouchableOpacity
-        activeOpacity={0.8}
-       onPress={() =>
-  navigation.navigate('PromotionDetail', {
-     promotionId: item.id || item._id,
-  })
-}
+        activeOpacity={0.85}
+        onPress={() =>
+          navigation.navigate('PromotionDetail', {
+            promotionId: item.id || item._id,
+          })
+        }
       >
         <View style={styles.card}>
           <View style={styles.row}>
@@ -101,18 +86,34 @@ export default function PromotionScreen({ navigation }) {
     <View style={styles.container}>
       <FlatList
         data={promotions}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id || item._id}
         renderItem={renderItem}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
+
+      {/* ===== FLOATING ACTION BUTTON ===== */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={styles.fab}
+        onPress={() =>
+          navigation.navigate('PromotionForm', { mode: 'create' })
+        }
+      >
+        <Ionicons name="add" size={28} color="#FFF" />
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F6FA', padding: 12 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F6FA',
+    padding: 12,
+  },
+
   card: {
     backgroundColor: '#FFF',
     borderRadius: 12,
@@ -120,14 +121,69 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     elevation: 2,
   },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  name: { fontSize: 16, fontWeight: '600' },
-  code: { marginTop: 4, color: '#666' },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  meta: { fontSize: 13, color: '#555' },
-  discount: { marginTop: 6, fontWeight: '500', color: '#1E88E5' },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  active: { backgroundColor: '#E8F5E9' },
-  inactive: { backgroundColor: '#FCE4EC' },
-  badgeText: { fontSize: 12, fontWeight: '600' },
+
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  name: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  code: {
+    marginTop: 4,
+    color: '#666',
+  },
+
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+
+  meta: {
+    fontSize: 13,
+    color: '#555',
+  },
+
+  discount: {
+    marginTop: 6,
+    fontWeight: '500',
+    color: '#1E88E5',
+  },
+
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+
+  active: {
+    backgroundColor: '#E8F5E9',
+  },
+
+  inactive: {
+    backgroundColor: '#FCE4EC',
+  },
+
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  /* ===== FAB ===== */
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#1E88E5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+  },
 });
