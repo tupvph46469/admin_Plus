@@ -5,7 +5,9 @@ const EXTRA =
   Constants.manifest?.extra ||   // Older Expo versions
   {};
 export const CONFIG = {
-  baseURL: EXTRA.API_BASE_URL || "http://103.179.189.32:3000", // Đã có apiPrefix ở đây
+  baseURL: EXTRA.API_BASE_URL || "http://192.168.1.5:3000", // Đã có apiPrefix ở đây
+  //link backend cục bộ, thay đổi theo địa chỉ IP của máy chạy server
+  //link vps: "http://103.179.189.32:3000"
   apiPrefix: "/api/v1",
   appName: "Billiard POS",
 };

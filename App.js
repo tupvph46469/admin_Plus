@@ -114,9 +114,9 @@ export default function App() {
         <Stack.Screen name="PromotionDetail" component={PromotionDetailScreen} options={{ headerTitleAlign: "center", title: "Chi tiết khuyến mãi" }} />
         <Stack.Screen name="PromotionForm" component={PromotionFormScreen} options={{ headerTitleAlign: "center", title: "Form khuyến mãi" }} />
 
-        <Stack.Screen name="Nhân viên" component={EmployeeListScreen} options={{ headerTitleAlign: "center" }} />
-        <Stack.Screen name="Chi tiết nhân viên" component={EmployeeDetailScreen} options={{ headerTitleAlign: "center" }} />
-        <Stack.Screen name="Form nhân viên" component={EmployeeFormScreen} options={{ headerTitleAlign: "center" }} />
+        <Stack.Screen name="Nhân viên" component={EmployeeListScreen} options={{ headerTitleAlign: "center", title: "Tài khoản" }} />
+        <Stack.Screen name="Chi tiết nhân viên" component={EmployeeDetailScreen} options={{ headerTitleAlign: "center", title: "Tài khoản" }} />
+        <Stack.Screen name="Form nhân viên" component={EmployeeFormScreen} options={{ headerTitleAlign: "center", title: "Tài khoản" }} />
 
         <Stack.Screen name="Khu vực" component={ListAreasScreen} options={{ headerTitleAlign: "center" }} />
         <Stack.Screen name="Chi tiết khu vực" component={DetailArea} options={{ headerTitleAlign: "center" }} />
