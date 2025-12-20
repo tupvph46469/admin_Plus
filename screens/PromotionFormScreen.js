@@ -10,6 +10,7 @@ import {
   Switch,
 } from 'react-native';
 import promotionService from '../services/promotionService';
+import ProductPickerModal from '../components/ProductPickerModal';
 
 const DAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
@@ -20,6 +21,11 @@ export default function PromotionFormScreen({ navigation, route }) {
   const [mode, setMode] = useState(modeInit);
   const [originalPromotion, setOriginalPromotion] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
+  const SCOPE_OPTIONS = [
+  { value: 'bill', label: 'Theo hóa đơn' },
+  { value: 'time', label: 'Theo thời gian' },
+  { value: 'product', label: 'Theo sản phẩm' },
+];
 
   /* ===== PREVIEW STATE (MỚI) ===== */
   const [previewAt, setPreviewAt] = useState('');
@@ -34,6 +40,10 @@ export default function PromotionFormScreen({ navigation, route }) {
     description: '',
     active: true,
     stackable: true,
+      billRule: {
+    minSubtotal: 0,
+   
+  },
     timeRule: {
       validFrom: null,
       validTo: null,
@@ -41,6 +51,11 @@ export default function PromotionFormScreen({ navigation, route }) {
       timeRanges: [],
       minMinutes: 0,
     },
+      productRule: {
+    categories: [],
+    products: [],
+    combo: [],
+  },
   });
 
   /* ================= LOAD DETAIL ================= */
@@ -61,6 +76,9 @@ export default function PromotionFormScreen({ navigation, route }) {
       description: data.description || '',
       active: data.active,
       stackable: data.stackable,
+        billRule: data.billRule || {
+    minSubtotal: 0,
+  },
       timeRule: data.timeRule || {
         validFrom: null,
         validTo: null,
@@ -68,6 +86,11 @@ export default function PromotionFormScreen({ navigation, route }) {
         timeRanges: [],
         minMinutes: 0,
       },
+       productRule: data.productRule || {
+    categories: [],
+    products: [],
+    combo: [],
+  },
     });
   }
 
@@ -86,7 +109,27 @@ export default function PromotionFormScreen({ navigation, route }) {
     ) {
       return 'Giảm phần trăm không được vượt quá 100%';
     }
+    if (originalPromotion?.scope === 'product') {
+  if (
+    form.productRule.products.length === 0 &&
+    form.productRule.categories.length === 0 &&
+    form.productRule.combo.length === 0
+  ) {
+    return 'Phải chọn ít nhất 1 điều kiện sản phẩm';
+  }
 
+  for (const c of form.productRule.combo) {
+    if (!c.product || c.qty < 1) {
+      return 'Combo không hợp lệ';
+    }
+  }
+}
+
+    if (originalPromotion?.scope === 'bill') {
+  if (form.billRule.minSubtotal < 0) {
+    return 'Hóa đơn tối thiểu không hợp lệ';
+  }
+}
     if (originalPromotion?.scope === 'time') {
       const { validFrom, validTo } = form.timeRule;
 
@@ -192,6 +235,13 @@ export default function PromotionFormScreen({ navigation, route }) {
         if (originalPromotion.scope === 'time') {
           payload.timeRule = form.timeRule;
         }
+        if (originalPromotion.scope === 'bill') {
+    payload.billRule = form.billRule;
+  }
+  if (originalPromotion.scope === 'product') {
+  payload.productRule = form.productRule;
+}
+
 
         await promotionService.updatePromotion(promotionId, payload);
       }
@@ -225,6 +275,38 @@ export default function PromotionFormScreen({ navigation, route }) {
 
       <Input label="Mô tả" value={form.description} editable={!readonly}
         onChange={(v) => { setForm({ ...form, description: v }); setIsDirty(true); }} />
+      {/* SCOPE SELECT */}
+<View style={styles.section}>
+  <Text style={styles.sectionTitle}>Phạm vi áp dụng</Text>
+
+  {SCOPE_OPTIONS.map((opt) => {
+    const selected = form.scope === opt.value;
+
+    return (
+      <TouchableOpacity
+        key={opt.value}
+        disabled={mode !== 'create'} // ❗ không cho đổi scope khi edit
+        onPress={() => {
+          setForm({
+            ...form,
+            scope: opt.value,
+          });
+          setIsDirty(true);
+        }}
+        style={[
+          styles.scopeItem,
+          selected && styles.scopeItemActive,
+          mode !== 'create' && { opacity: 0.6 },
+        ]}
+      >
+        <View style={styles.radio}>
+          {selected && <View style={styles.radioDot} />}
+        </View>
+        <Text style={styles.scopeLabel}>{opt.label}</Text>
+      </TouchableOpacity>
+    );
+  })}
+</View>
 
       {/* STATUS */}
       <View style={styles.section}>
@@ -240,6 +322,31 @@ export default function PromotionFormScreen({ navigation, route }) {
             onValueChange={(v) => { setForm({ ...form, stackable: v }); setIsDirty(true); }} />
         </View>
       </View>
+    
+
+{/* BILL RULE */}
+{form.scope === 'bill' && (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>Điều kiện hóa đơn</Text>
+
+    <Input
+      label="Hóa đơn tối thiểu (đ)"
+      value={String(form.billRule.minSubtotal)}
+      editable={!readonly}
+      keyboardType="numeric"
+      onChange={(v) => {
+        setForm({
+          ...form,
+          billRule: {
+            ...form.billRule,
+            minSubtotal: Number(v) || 0,
+          },
+        });
+        setIsDirty(true);
+      }}
+    />
+  </View>
+)}
 
       {/* TIME RULE */}
       {form.scope === 'time' && (
@@ -567,4 +674,38 @@ const styles = StyleSheet.create({
   },
   primary: { backgroundColor: '#1E88E5' },
   buttonText: { color: '#FFF', fontWeight: '600' },
+  scopeItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: 10,
+},
+
+scopeItemActive: {
+  backgroundColor: '#F1F8FF',
+  borderRadius: 8,
+  paddingHorizontal: 8,
+},
+
+radio: {
+  width: 18,
+  height: 18,
+  borderRadius: 9,
+  borderWidth: 2,
+  borderColor: '#1E88E5',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 10,
+},
+
+radioDot: {
+  width: 8,
+  height: 8,
+  borderRadius: 4,
+  backgroundColor: '#1E88E5',
+},
+
+scopeLabel: {
+  fontSize: 15,
+},
+
 });

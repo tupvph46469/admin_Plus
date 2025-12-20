@@ -19,7 +19,7 @@ const menuData = [
     children: ["Mặt hàng"],
   },
   {
-    title: "Quản lý nhân viên",
+    title: "Quản lý tài khoản",
     icon: "people-outline",
     color: "#007AFF",
     children: ["Nhân viên"],
