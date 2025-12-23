@@ -22,7 +22,7 @@ const menuData = [
     title: "Quản lý tài khoản",
     icon: "people-outline",
     color: "#007AFF",
-    children: ["Nhân viên"],
+    children: ["Tài khoản"],
   },
   {
     title: "Quản lý bàn chơi",
@@ -83,7 +83,7 @@ export default function MoreScreen({ navigation }) {
   const handleSubItemPress = (subItem) => {
     const routeMap = {
       "Mặt hàng": "Mặt hàng",
-      "Nhân viên": "Nhân viên",
+      "Tài khoản": "Nhân viên",
       "Khu vực": "Khu vực",
       "Bàn chơi": "Bàn chơi",
     };

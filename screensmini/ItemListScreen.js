@@ -1,15 +1,19 @@
-// screens/ItemListScreen.js
-import React, { useEffect, useState,useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, Image,
-  TouchableOpacity, StyleSheet, ActivityIndicator,
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { getAllProducts } from '../services/ProductService';
 import { API_URL } from '../constants/config';
-import { useFocusEffect } from '@react-navigation/native';
-const FILE_BASE_URL = API_URL.replace('/api/v1', ''); 
-// VD: API_URL = 'http://192.168.1.5:3000/api/v1'
-// => FILE_BASE_URL = 'http://192.168.1.5:3000'
+
+const FILE_BASE_URL = API_URL.replace('/api/v1', '');
 
 export default function ItemListScreen({ navigation }) {
   const [items, setItems] = useState([]);
@@ -20,8 +24,7 @@ export default function ItemListScreen({ navigation }) {
     try {
       setLoading(true);
       setError(null);
-
-      const list = await getAllProducts();   // 🔥 gọi service
+      const list = await getAllProducts();
       setItems(list);
     } catch (e) {
       setError('Không thể tải dữ liệu');
@@ -30,17 +33,17 @@ export default function ItemListScreen({ navigation }) {
     }
   };
 
-useFocusEffect(
-  useCallback(() => {
-     loadData()
-  }, [])
-);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   if (loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" />
-        <Text>Đang tải dữ liệu...</Text>
+        <Text style={{ marginTop: 8 }}>Đang tải dữ liệu...</Text>
       </View>
     );
   }
@@ -48,7 +51,7 @@ useFocusEffect(
   if (error) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: 'red' }}>{error}</Text>
+        <Text style={{ color: 'red', marginBottom: 8 }}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={loadData}>
           <Text style={{ color: '#fff' }}>Thử lại</Text>
         </TouchableOpacity>
@@ -56,69 +59,139 @@ useFocusEffect(
     );
   }
 
+  const renderItem = ({ item }) => {
+    const imageUrl = item.images?.length
+      ? `${FILE_BASE_URL}${item.images[0]}`
+      : 'https://via.placeholder.com/60';
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('Chi tiết mặt hàng', { item })}
+        activeOpacity={0.8}
+      >
+        <Image source={{ uri: imageUrl }} style={styles.image} />
+
+        <View style={styles.info}>
+          <Text style={styles.name} numberOfLines={1}>
+            {item.name}
+          </Text>
+
+          {item.category?.name && (
+            <Text style={styles.category}>{item.category.name}</Text>
+          )}
+        </View>
+
+        <View style={styles.priceBox}>
+          <Text style={styles.price}>{item.price} đ</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <FlatList
         data={items}
         keyExtractor={(item, index) =>
-    item?.id
-      ? String(item.id)
-      : item?._id
-      ? String(item._id)
-      : String(index) // fallback cuối cùng
-  }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate('Chi tiết mặt hàng', { item })}
-          >
-            <Image
-              style={styles.image}
-              source={{
-                uri: item.images?.length
-                  ? `${FILE_BASE_URL}${item.images[0]}`   // VD: /uploads/xx.jpg
-                  : 'https://via.placeholder.com/60',
-              }}
-            />
-            <View style={styles.info}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.price}>{item.price} đ</Text>
-            </View>
-          </TouchableOpacity>
-        )}
+          item?.id
+            ? String(item.id)
+            : item?._id
+            ? String(item._id)
+            : String(index)
+        }
+        renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
       />
 
+      {/* FAB */}
       <TouchableOpacity
-        style={styles.addButton}
+        style={styles.fab}
         onPress={() => navigation.navigate('Thêm mặt hàng')}
+        activeOpacity={0.9}
       >
-        <Text style={styles.addText}>+ Thêm mặt hàng</Text>
+        <Ionicons name="add" size={28} color="#fff" />
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#f6f6f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  card: { flexDirection: 'row', marginBottom: 16, alignItems: 'center' },
-  image: { width: 60, height: 60, borderRadius: 8 },
-  info: { marginLeft: 12 },
-  name: { fontSize: 16, fontWeight: '600' },
-  price: { fontSize: 14, color: '#007AFF' },
-  addButton: {
-    backgroundColor: '#007AFF',
+
+  card: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginTop: 12,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  addText: { color: '#fff', fontSize: 16 },
+
+  image: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    backgroundColor: '#eee',
+  },
+
+  info: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  name: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+  },
+
+  category: {
+    fontSize: 13,
+    color: '#777',
+    marginTop: 2,
+  },
+
+  priceBox: {
+    backgroundColor: '#EAF3FF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+
+  price: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 30,
+    backgroundColor: '#007AFF',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
   retryBtn: {
     backgroundColor: '#007AFF',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    marginTop: 8,
   },
 });
