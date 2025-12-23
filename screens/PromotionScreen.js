@@ -21,8 +21,10 @@ export default function PromotionScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
 
   async function loadData() {
-    const data = await promotionService.getPromotions({ sort: 'applyOrder' });
-    setPromotions(data.items || []);
+    const res = await promotionService.getPromotions({ sort: 'applyOrder' });
+    // an toàn với các shape trả về khác nhau
+    const items = res?.items || res?.data?.items || [];
+    setPromotions(items);
   }
 
   async function onRefresh() {
@@ -31,16 +33,18 @@ export default function PromotionScreen({ navigation }) {
     setRefreshing(false);
   }
 
-useEffect(() => {
-  const unsubscribe = navigation.addListener('focus', () => {
-    loadData();
-  });
-
-  return unsubscribe;
-}, [navigation]);
-
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadData();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   function renderItem({ item }) {
+    // FIX: chuẩn hóa enum discount (percent | percentage)
+    const discountType = item.discount?.type;
+    const isPercent = ['percent', 'percentage'].includes(discountType);
+
     return (
       <TouchableOpacity
         activeOpacity={0.85}
@@ -78,9 +82,9 @@ useEffect(() => {
 
           <Text style={styles.discount}>
             Giảm:{' '}
-            {item.discount?.type === 'percent'
-              ? `${item.discount.value}%`
-              : `${item.discount.value.toLocaleString()}đ`}
+            {isPercent
+              ? `${item.discount?.value ?? 0}%`
+              : `${(item.discount?.value ?? 0).toLocaleString()}đ`}
           </Text>
         </View>
       </TouchableOpacity>
@@ -91,11 +95,12 @@ useEffect(() => {
     <View style={styles.container}>
       <FlatList
         data={promotions}
-        keyExtractor={(item) => item.id || item._id}
+        keyExtractor={(item) => String(item.id || item._id)}
         renderItem={renderItem}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        showsVerticalScrollIndicator={false}
       />
 
       {/* ===== FLOATING ACTION BUTTON ===== */}
@@ -130,6 +135,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
   name: {

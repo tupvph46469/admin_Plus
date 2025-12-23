@@ -176,7 +176,7 @@ export default function EmployeeFormScreen({ route, navigation }) {
         style={styles.input}
         value={fullName}
         onChangeText={setFullName}
-        editable={!loading}
+        editable={isAddMode && !loading}
       />
 
       {/* Username */}

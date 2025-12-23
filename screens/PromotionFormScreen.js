@@ -14,7 +14,7 @@ import ProductPickerModal from '../components/ProductPickerModal';
 import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-const DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7','CN' ];
+const DAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 const ACTION_BAR_HEIGHT = 80;
 export default function PromotionFormScreen({ navigation, route }) {
   const modeInit = route.params?.mode || 'create';
@@ -67,6 +67,64 @@ export default function PromotionFormScreen({ navigation, route }) {
     combo: [],
   },
   });
+  function buildTimeRuleForCreate(timeRule) {
+  return {
+    validFrom: timeRule.validFrom || null,
+    validTo: timeRule.validTo || null,
+    daysOfWeek: timeRule.daysOfWeek || [],
+    timeRanges: (timeRule.timeRanges || []).map(tr => ({
+      from: tr.from,
+      to: tr.to,
+    })),
+    minMinutes: timeRule.minMinutes || 0,
+  };
+}
+  function normalizeDiscountType(type) {
+  if (type === 'percentage') return 'percent';
+  if (type === 'fixed') return 'value';
+  if (type === 'percent' || type === 'value') return type;
+  return 'value';
+}
+function buildConditionsFromTimeRule(timeRule) {
+  return {
+    validFrom: timeRule.validFrom || null,
+    validTo: timeRule.validTo || null,
+    timeRules: Array.isArray(timeRule.timeRanges)
+      ? timeRule.timeRanges.map(tr => ({
+          startTime: tr.from,
+          endTime: tr.to,
+          daysOfWeek: timeRule.daysOfWeek || [],
+          minMinutes: timeRule.minMinutes || 0,
+        }))
+      : [],
+  };
+}
+
+
+
+  function normalizeTimeRuleFromBackend(data) {
+  const rules = data.conditions?.timeRules;
+  if (!rules || rules.length === 0) {
+    return {
+      validFrom: null,
+      validTo: null,
+      daysOfWeek: [],
+      timeRanges: [],
+      minMinutes: 0,
+    };
+  }
+
+  return {
+    validFrom: null,
+    validTo: null,
+    daysOfWeek: rules[0].daysOfWeek || [],
+    timeRanges: rules.map(r => ({
+      from: r.startTime,
+      to: r.endTime,
+    })),
+    minMinutes: rules[0].minMinutes || 0,
+  };
+}
 
   /* ================= LOAD DETAIL ================= */
   useEffect(() => {
@@ -77,31 +135,24 @@ export default function PromotionFormScreen({ navigation, route }) {
     const data = await promotionService.getPromotionById(promotionId);
     setOriginalPromotion(data);
 
-    setForm({
-      name: data.name,
-      code: data.code,
-      scope: data.scope,
-      applyOrder: data.applyOrder,
-      discountValue: String(data.discount.value),
-      description: data.description || '',
-      active: data.active,
-      stackable: data.stackable,
-        billRule: data.billRule || {
-    minSubtotal: 0,
-  },
-      timeRule: data.timeRule || {
-        validFrom: null,
-        validTo: null,
-        daysOfWeek: [],
-        timeRanges: [],
-        minMinutes: 0,
-      },
-       productRule: data.productRule || {
+setForm({
+  name: data.name,
+  code: data.code,
+  scope: data.scope,
+  applyOrder: data.applyOrder,
+  discountValue: String(data.discount?.value ?? ''),
+  description: data.description || '',
+  active: data.active,
+  stackable: data.stackable,
+  billRule: data.billRule || { minSubtotal: 0 },
+  timeRule: normalizeTimeRuleFromBackend(data),
+  productRule: data.productRule || {
     categories: [],
     products: [],
     combo: [],
   },
-    });
+});
+
   }
 
 function formatTime(date) {
@@ -252,10 +303,12 @@ async function handleSave() {
         applyOrder: Number(form.applyOrder),
         active: form.active,
         stackable: form.stackable,
-        discount: {
-          type: 'value',
-          value: Number(form.discountValue),
-        },
+discount: {
+  type: 'percent',        // hoặc 'percent' nếu bạn muốn
+  applyTo: 'bill',
+  value: Number(form.discountValue),
+  maxAmount: null,
+},
         description: form.description,
       };
 
@@ -265,9 +318,9 @@ async function handleSave() {
         };
       }
 
-      if (form.scope === 'time') {
-        payload.timeRule = form.timeRule;
-      }
+     if (form.scope === 'time') {
+  payload.timeRule = buildTimeRuleForCreate(form.timeRule);
+}
 
       if (form.scope === 'product') {
         payload.productRule = form.productRule;
@@ -288,21 +341,33 @@ async function handleSave() {
     else {
       payload = {
         name: form.name,
+        scope: originalPromotion.scope,
         description: form.description,
         applyOrder: Number(form.applyOrder),
         active: form.active,
         stackable: form.stackable,
-        discount: {
-          type: originalPromotion.discount.type,
-          applyTo: originalPromotion.discount.applyTo,
-          value: Number(form.discountValue),
-          maxAmount: originalPromotion.discount.maxAmount ?? null,
-        },
+  discount: {
+  type: normalizeDiscountType(originalPromotion.discount.type),
+  applyTo: originalPromotion.discount.applyTo,
+  value: Number(form.discountValue),
+  maxAmount: originalPromotion.discount.maxAmount ?? null,
+},
       };
 
-      if (originalPromotion.scope === 'time') {
-        payload.timeRule = form.timeRule;
-      }
+ if (originalPromotion.scope === 'time') {
+  const conditions = buildConditionsFromTimeRule(form.timeRule);
+
+  payload.conditions = {
+    validFrom: conditions.validFrom,
+    validTo: conditions.validTo,
+
+    // 🔥 CỰC KỲ QUAN TRỌNG
+    timeRules: conditions.timeRules.length > 0
+      ? conditions.timeRules
+      : [], // ép backend phải clear
+  };
+}
+
 
       if (originalPromotion.scope === 'bill') {
         payload.billRule = form.billRule;
