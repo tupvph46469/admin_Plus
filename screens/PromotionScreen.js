@@ -31,9 +31,14 @@ export default function PromotionScreen({ navigation }) {
     setRefreshing(false);
   }
 
-  useEffect(() => {
+useEffect(() => {
+  const unsubscribe = navigation.addListener('focus', () => {
     loadData();
-  }, []);
+  });
+
+  return unsubscribe;
+}, [navigation]);
+
 
   function renderItem({ item }) {
     return (

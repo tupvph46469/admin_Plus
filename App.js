@@ -4,7 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import OverviewScreen from "./screens/OverviewScreen";
 import ReportScreen from "./screens/ReportScreen";
 import InvoiceScreen from "./screens/InvoiceScreen";
@@ -37,6 +37,51 @@ import { navigationRef } from './services/navigationService';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+const toastConfig = {
+  success: (props) => (
+    <BaseToast
+      {...props}
+      style={{
+        borderLeftColor: '#2E7D32',   // xanh success
+        minHeight: 48,                // ⭐ làm toast mỏng
+      }}
+      contentContainerStyle={{
+        paddingHorizontal: 12,
+      }}
+      text1Style={{
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#2E7D32',
+      }}
+      text2Style={{
+        fontSize: 12,
+        color: '#444',
+      }}
+    />
+  ),
+
+  error: (props) => (
+    <ErrorToast
+      {...props}
+      style={{
+        borderLeftColor: '#C62828',
+        minHeight: 48,
+      }}
+      contentContainerStyle={{
+        paddingHorizontal: 12,
+      }}
+      text1Style={{
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#C62828',
+      }}
+      text2Style={{
+        fontSize: 12,
+        color: '#444',
+      }}
+    />
+  ),
+};
 
 /* ---------------------------------------------------------- */
 /* ---------------------- TAB NAVIGATOR ---------------------- */
@@ -75,6 +120,7 @@ function TabNavigator() {
 /* ---------------------------------------------------------- */
 export default function App() {
   return (
+    <>
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator>
 
@@ -142,5 +188,8 @@ export default function App() {
 
       </Stack.Navigator>
     </NavigationContainer>
+      {/* ===== TOAST ROOT (BẮT BUỘC) ===== */}
+      <Toast config={toastConfig} />
+    </>
   );
 }

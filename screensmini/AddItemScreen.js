@@ -8,10 +8,16 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Modal,
+  FlatList,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
-import { createProduct, getMenuCategories,uploadProductImage } from '../services/ProductService';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  createProduct,
+  getMenuCategories,
+  uploadProductImage,
+} from '../services/ProductService';
 
 export default function AddItemScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -19,26 +25,24 @@ export default function AddItemScreen({ navigation }) {
   const [note, setNote] = useState('');
 
   const [categories, setCategories] = useState([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-  const [imageUri, setImageUri] = useState(null); // ảnh local để preview
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
+  const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
-  // Load categories khi mở màn hình
   useEffect(() => {
     const loadCategories = async () => {
       try {
         setLoadingCategories(true);
         const list = await getMenuCategories();
-        console.log('📂 Categories:', list);
         setCategories(list);
         if (list.length > 0) {
-          setSelectedCategoryId(list[0].id); // chọn cái đầu tiên
+          setSelectedCategory(list[0]);
         }
       } catch (err) {
-        console.log('❌ loadCategories error:', err?.response?.data || err);
-        Alert.alert('Lỗi', 'Không tải được danh mục. Vui lòng thử lại.');
+        Alert.alert('Lỗi', 'Không tải được danh mục');
       } finally {
         setLoadingCategories(false);
       }
@@ -46,71 +50,56 @@ export default function AddItemScreen({ navigation }) {
 
     loadCategories();
   }, []);
-const handlePickImage = async () => {
-  // xin quyền
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') {
-    Alert.alert('Quyền truy cập', 'Ứng dụng cần quyền truy cập thư viện ảnh.');
-    return;
-  }
 
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    quality: 0.7,
-  });
-
-  if (!result.canceled) {
-    const uri = result.assets[0].uri;
-    setImageUri(uri);
-  }
-};
-const handleSave = async () => {
-  if (!name.trim()) {
-    Alert.alert('Lỗi', 'Vui lòng nhập tên mặt hàng');
-    return;
-  }
-  if (!price.trim()) {
-    Alert.alert('Lỗi', 'Vui lòng nhập giá bán');
-    return;
-  }
-  if (!selectedCategoryId) {
-    Alert.alert('Lỗi', 'Vui lòng chọn danh mục');
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    let imagePath = null;
-    if (imageUri) {
-      // 1) Upload ảnh, lấy đường dẫn trên server
-      imagePath = await uploadProductImage(imageUri);
-      console.log('📷 Uploaded path:', imagePath);
+  const handlePickImage = async () => {
+    const { status } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Quyền truy cập', 'Cần quyền truy cập thư viện ảnh');
+      return;
     }
 
-    // 2) Tạo product với imagePath
-    await createProduct({
-      name: name.trim(),
-      price: price.trim(),
-      note: note.trim(),
-      categoryId: selectedCategoryId,
-      imagePath,
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
     });
 
-    Alert.alert('Thành công', 'Đã thêm mặt hàng mới.', [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
-  } catch (err) {
-    console.log('❌ createProduct error:', err?.response?.data || err);
-    Alert.alert(
-      'Lỗi',
-      err?.response?.data?.message || 'Không thể thêm mặt hàng. Vui lòng thử lại.'
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
+  const handleSave = async () => {
+    if (!name.trim() || !price.trim() || !selectedCategory) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      let imagePath = null;
+      if (imageUri) {
+        imagePath = await uploadProductImage(imageUri);
+      }
+
+      await createProduct({
+        name: name.trim(),
+        price: price.trim(),
+        note: note.trim(),
+        categoryId: selectedCategory.id || selectedCategory._id,
+        imagePath,
+      });
+
+      Alert.alert('Thành công', 'Đã thêm mặt hàng', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (err) {
+      Alert.alert('Lỗi', 'Không thể lưu mặt hàng');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loadingCategories) {
     return (
@@ -122,51 +111,34 @@ const handleSave = async () => {
   }
 
   return (
-    
     <View style={styles.container}>
-      <View style={{ alignItems: 'center', marginBottom: 20 }}>
-  <TouchableOpacity onPress={handlePickImage}>
-    {imageUri ? (
-      <Image
-        source={{ uri: imageUri }}
-        style={{ width: 120, height: 120, borderRadius: 10 }}
-      />
-    ) : (
-      <View
-        style={{
-          width: 120,
-          height: 120,
-          borderRadius: 10,
-          borderWidth: 1,
-          borderColor: '#ccc',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Text>Chọn ảnh</Text>
+      {/* IMAGE */}
+      <View style={styles.imageBox}>
+        <TouchableOpacity onPress={handlePickImage}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.image} />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Ionicons name="image-outline" size={32} color="#888" />
+              <Text style={styles.imageText}>Chọn ảnh</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
-    )}
-  </TouchableOpacity>
-  <Text style={{ marginTop: 6, color: '#666' }}>Nhấn để chọn ảnh</Text>
-</View>
 
-      {/* Chọn danh mục */}
+      {/* CATEGORY */}
       <Text style={styles.label}>Danh mục</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={selectedCategoryId}
-          onValueChange={(value) => setSelectedCategoryId(value)}
-        >
-          {categories.map((cat) => (
-            <Picker.Item
-              key={cat.id || cat._id}
-              label={cat.name}
-              value={cat.id || cat._id}
-            />
-          ))}
-        </Picker>
-      </View>
+      <TouchableOpacity
+        style={styles.selectBox}
+        onPress={() => setShowCategoryModal(true)}
+      >
+        <Text style={styles.selectText}>
+          {selectedCategory?.name || 'Chọn danh mục'}
+        </Text>
+        <Ionicons name="chevron-down" size={20} color="#555" />
+      </TouchableOpacity>
 
+      {/* NAME */}
       <Text style={styles.label}>Tên mặt hàng</Text>
       <TextInput
         style={styles.input}
@@ -175,6 +147,7 @@ const handleSave = async () => {
         placeholder="VD: Bánh mì"
       />
 
+      {/* PRICE */}
       <Text style={styles.label}>Giá bán</Text>
       <TextInput
         style={styles.input}
@@ -184,6 +157,7 @@ const handleSave = async () => {
         keyboardType="numeric"
       />
 
+      {/* NOTE */}
       <Text style={styles.label}>Ghi chú</Text>
       <TextInput
         style={[styles.input, { height: 80 }]}
@@ -193,15 +167,43 @@ const handleSave = async () => {
         multiline
       />
 
+      {/* SAVE */}
       <TouchableOpacity
         style={[styles.saveButton, loading && { opacity: 0.7 }]}
         onPress={handleSave}
         disabled={loading}
       >
         <Text style={styles.saveText}>
-          {loading ? 'Đang lưu...' : '💾 Lưu'}
+          {loading ? 'Đang lưu...' : 'Lưu'}
         </Text>
       </TouchableOpacity>
+
+      {/* CATEGORY MODAL */}
+      <Modal visible={showCategoryModal} transparent animationType="slide">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          onPress={() => setShowCategoryModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chọn danh mục</Text>
+            <FlatList
+              data={categories}
+              keyExtractor={(item) => item.id || item._id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setSelectedCategory(item);
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -209,28 +211,72 @@ const handleSave = async () => {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  label: { fontSize: 16, marginBottom: 6, color: '#333' },
+
+  imageBox: { alignItems: 'center', marginBottom: 20 },
+  image: { width: 120, height: 120, borderRadius: 10 },
+  imagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageText: { marginTop: 6, color: '#666' },
+
+  label: { fontSize: 15, marginBottom: 6, color: '#333' },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
-    padding: 10,
+    padding: 12,
     marginBottom: 16,
     fontSize: 16,
   },
-  pickerWrapper: {
+
+  selectBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
+    padding: 12,
     marginBottom: 16,
-    overflow: 'hidden',
   },
+  selectText: { fontSize: 16, color: '#333' },
+
   saveButton: {
     backgroundColor: '#34C759',
-    padding: 12,
+    padding: 14,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
-  saveText: { color: '#fff', fontSize: 16 },
+  saveText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    maxHeight: '60%',
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  modalItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalItemText: { fontSize: 16 },
 });

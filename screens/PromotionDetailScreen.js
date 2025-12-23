@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useFocusEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import promotionService from '../services/promotionService';
+import Toast from 'react-native-toast-message';
 
 const SCOPE_LABEL = {
   time: 'Theo thời gian',
@@ -23,9 +24,16 @@ export default function PromotionDetailScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [promo, setPromo] = useState(null);
 
-  useEffect(() => {
+useEffect(() => {
+  const unsubscribe = navigation.addListener('focus', () => {
+    setLoading(true);
     loadDetail();
-  }, []);
+  });
+
+  return unsubscribe;
+}, [navigation, promotionId]);
+
+
 
   async function loadDetail() {
     try {
@@ -39,19 +47,46 @@ export default function PromotionDetailScreen({ navigation, route }) {
     }
   }
 
-  async function handleDelete() {
-    Alert.alert('Xóa khuyến mãi?', 'Hành động này không thể hoàn tác', [
-      { text: 'Hủy' },
+async function handleDelete() {
+  Alert.alert(
+    'Xóa khuyến mãi?',
+    'Hành động này không thể hoàn tác',
+    [
+      { text: 'Hủy', style: 'cancel' },
       {
         text: 'Xóa',
         style: 'destructive',
         onPress: async () => {
-          await promotionService.deletePromotion(promotionId);
-          navigation.goBack();
+          try {
+            await promotionService.deletePromotion(promotionId);
+
+            // ✅ TOAST THÀNH CÔNG
+            Toast.show({
+              type: 'success',
+              text1: 'Đã xóa khuyến mãi',
+              position: 'bottom',
+              bottomOffset: 90,
+              visibilityTime: 2200,
+            });
+
+            navigation.goBack();
+          } catch (e) {
+            // ❌ TOAST LỖI
+            Toast.show({
+              type: 'error',
+              text1: 'Xóa thất bại',
+              text2: 'Không thể xóa khuyến mãi',
+              position: 'bottom',
+              bottomOffset: 90,
+              visibilityTime: 3000,
+            });
+          }
         },
       },
-    ]);
-  }
+    ]
+  );
+}
+
 
   if (loading) {
     return (
@@ -64,112 +99,106 @@ export default function PromotionDetailScreen({ navigation, route }) {
   if (!promo) return null;
 
   return (
-    <ScrollView style={styles.container}>
-      {/* ===== HEADER ===== */}
-      <View style={styles.header}>
-        <Text style={styles.name}>{promo.name}</Text>
-        <View
-          style={[
-            styles.badge,
-            promo.active ? styles.active : styles.inactive,
-          ]}
-        >
-          <Text style={styles.badgeText}>
-            {promo.active ? 'Đang bật' : 'Đang tắt'}
-          </Text>
+    <View style={styles.screen}>
+      {/* ===== CONTENT ===== */}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 140 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* HEADER */}
+        <View style={styles.header}>
+          <Text style={styles.name}>{promo.name}</Text>
+          <View
+            style={[
+              styles.badge,
+              promo.active ? styles.active : styles.inactive,
+            ]}
+          >
+            <Text style={styles.badgeText}>
+              {promo.active ? 'Đang bật' : 'Đang tắt'}
+            </Text>
+          </View>
         </View>
-      </View>
 
-      <Detail label="Mã khuyến mãi" value={promo.code} />
-      <Detail label="Phạm vi" value={SCOPE_LABEL[promo.scope]} />
-      <Detail label="Thứ tự áp dụng" value={String(promo.applyOrder)} />
+        <Detail label="Mã khuyến mãi" value={promo.code} />
+        <Detail label="Phạm vi" value={SCOPE_LABEL[promo.scope]} />
+        <Detail label="Thứ tự áp dụng" value={String(promo.applyOrder)} />
 
-      {/* ===== DISCOUNT ===== */}
-      <Section title="Mức giảm">
-        <Detail
-          label="Loại"
-          value={promo.discount.type === 'percent' ? 'Phần trăm' : 'Số tiền'}
-        />
-        <Detail
-          label="Giá trị"
-          value={
-            promo.discount.type === 'percent'
-              ? `${promo.discount.value}%`
-              : `${promo.discount.value.toLocaleString()}đ`
-          }
-        />
-        <Detail label="Áp dụng cho" value={promo.discount.applyTo} />
-        {promo.discount.maxAmount && (
+        {/* DISCOUNT */}
+        <Section title="Mức giảm">
           <Detail
-            label="Giảm tối đa"
-            value={`${promo.discount.maxAmount.toLocaleString()}đ`}
+            label="Loại"
+            value={promo.discount.type === 'percent' ? 'Phần trăm' : 'Số tiền'}
           />
+          <Detail
+            label="Giá trị"
+            value={
+              promo.discount.type === 'percent'
+                ? `${promo.discount.value}%`
+                : `${promo.discount.value.toLocaleString()}đ`
+            }
+          />
+          <Detail label="Áp dụng cho" value={promo.discount.applyTo} />
+        </Section>
+
+        {/* TIME RULE */}
+        {promo.scope === 'time' && (
+          <Section title="Điều kiện thời gian">
+            <Detail
+              label="Từ ngày"
+              value={formatDate(promo.timeRule.validFrom)}
+            />
+            <Detail
+              label="Đến ngày"
+              value={formatDate(promo.timeRule.validTo)}
+            />
+            <Detail
+              label="Ngày áp dụng"
+              value={
+                promo.timeRule.daysOfWeek.length
+                  ? promo.timeRule.daysOfWeek
+                      .map((d) => DAYS[d])
+                      .join(', ')
+                  : '—'
+              }
+            />
+            <Detail
+              label="Khung giờ"
+              value={
+                promo.timeRule.timeRanges.length
+                  ? promo.timeRule.timeRanges
+                      .map((t) => `${t.from}–${t.to}`)
+                      .join(', ')
+                  : '—'
+              }
+            />
+            <Detail
+              label="Tối thiểu phút chơi"
+              value={`${promo.timeRule.minMinutes} phút`}
+            />
+          </Section>
         )}
-      </Section>
 
-      {/* ===== TIME RULE ===== */}
-      {promo.scope === 'time' && (
-        <Section title="Điều kiện thời gian">
-          <Detail label="Từ ngày" value={formatDate(promo.timeRule.validFrom)} />
-          <Detail label="Đến ngày" value={formatDate(promo.timeRule.validTo)} />
-          <Detail
-            label="Ngày áp dụng"
-            value={
-              promo.timeRule.daysOfWeek.length
-                ? promo.timeRule.daysOfWeek.map((d) => DAYS[d]).join(', ')
-                : '—'
-            }
-          />
-          <Detail
-            label="Khung giờ"
-            value={
-              promo.timeRule.timeRanges.length
-                ? promo.timeRule.timeRanges
-                    .map((t) => `${t.from}–${t.to}`)
-                    .join(', ')
-                : '—'
-            }
-          />
-          <Detail
-            label="Tối thiểu phút chơi"
-            value={`${promo.timeRule.minMinutes} phút`}
-          />
-        </Section>
-      )}
-
-      {/* ===== BILL RULE (MỚI) ===== */}
-      {promo.scope === 'bill' && promo.billRule && (
-        <Section title="Điều kiện hóa đơn">
-          <Detail
-            label="Hóa đơn tối thiểu"
-            value={`${promo.billRule.minSubtotal.toLocaleString()}đ`}
-          />
-
-          {promo.billRule.minServiceAmount > 0 && (
+        {/* BILL RULE */}
+        {promo.scope === 'bill' && promo.billRule && (
+          <Section title="Điều kiện hóa đơn">
             <Detail
-              label="Dịch vụ tối thiểu"
-              value={`${promo.billRule.minServiceAmount.toLocaleString()}đ`}
+              label="Hóa đơn tối thiểu"
+              value={`${promo.billRule.minSubtotal.toLocaleString()}đ`}
             />
-          )}
+          </Section>
+        )}
 
-          {promo.billRule.minPlayMinutes > 0 && (
-            <Detail
-              label="Phút chơi tối thiểu"
-              value={`${promo.billRule.minPlayMinutes} phút`}
-            />
-          )}
-        </Section>
-      )}
+        {promo.description && (
+          <Section title="Mô tả">
+            <Text style={styles.desc}>{promo.description}</Text>
+          </Section>
+        )}
+      </ScrollView>
 
-      {/* ===== DESCRIPTION ===== */}
-      {promo.description ? (
-        <Section title="Mô tả">
-          <Text style={styles.desc}>{promo.description}</Text>
-        </Section>
-      ) : null}
-
-      {/* ===== ACTIONS ===== */}
-      <View style={styles.row}>
+      {/* ===== ACTION BAR (CỐ ĐỊNH) ===== */}
+      <View style={styles.actionBar}>
         <Button
           text="Sửa"
           primary
@@ -182,7 +211,7 @@ export default function PromotionDetailScreen({ navigation, route }) {
         />
         <Button text="Xóa" danger onPress={handleDelete} />
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -229,8 +258,21 @@ function formatDate(v) {
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F6FA', padding: 16 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  screen: {
+    flex: 1,
+    backgroundColor: '#F5F6FA',
+  },
+
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   header: {
     flexDirection: 'row',
@@ -238,12 +280,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  name: { fontSize: 20, fontWeight: '700' },
 
-  badge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
+  name: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+
+  badge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
+
   active: { backgroundColor: '#E8F5E9' },
   inactive: { backgroundColor: '#FCE4EC' },
-  badgeText: { fontWeight: '600' },
+
+  badgeText: {
+    fontWeight: '600',
+  },
 
   section: {
     backgroundColor: '#FFF',
@@ -251,6 +305,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 12,
   },
+
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
@@ -258,12 +313,21 @@ const styles = StyleSheet.create({
   },
 
   detail: { marginBottom: 8 },
+
   label: { color: '#777', fontSize: 13 },
+
   value: { fontSize: 15, fontWeight: '500' },
 
   desc: { fontSize: 14, lineHeight: 20 },
 
-  row: { flexDirection: 'row', gap: 12, marginTop: 20 },
+  actionBar: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#EEE',
+  },
 
   button: {
     flex: 1,
@@ -272,7 +336,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#CCC',
     alignItems: 'center',
   },
+
   primary: { backgroundColor: '#1E88E5' },
+
   danger: { backgroundColor: '#E53935' },
-  buttonText: { color: '#FFF', fontWeight: '600' },
+
+  buttonText: {
+    color: '#FFF',
+    fontWeight: '600',
+  },
 });
